@@ -1,33 +1,31 @@
-import requests
-from bs4 import BeautifulSoup
-
-from lib.logger import logger
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import csv
+from lib.config import Config
+import shutil
+# from lib.logger import logger
 
 
 class EnergyPricing:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self):
+        self.prices = []
 
-    def get_page_content(self):
-        response = requests.get(self.url)
-        if response.status_code == 200:
-            return response.content
-        else:
-            logger.critical("Failed to fetch the page content.")
+    @staticmethod
+    def update_prices_file():
+        driver = webdriver.Chrome()
+        driver.get(Config.LINK_ENERGY_PRICES)
+        time.sleep(3)
+        download_button = driver.find_element(By.XPATH, f"//a[@href='{Config.LINK_CSV_DOWNLOAD}']")
+        download_button.click()
+        time.sleep(5)
+        shutil.move(Config.PATH_DOWNLOAD_DIR, Config.DATA_PRICES)
+
+    def get_current_rce(self, hour: int) -> float | None:
+        # self.update_prices_file()
+        with open(Config.DATA_PRICES, 'r') as f:
+            csv_reader = csv.DictReader(f, delimiter=';')
+            for line in csv_reader:
+                if line["Godzina"] == str(hour):
+                    return line["RCE"]
             return None
-
-    def scrape_data(self):
-        content = self.get_page_content()
-        if content:
-            soup = BeautifulSoup(content, 'html.parser')
-            products = soup.find_all('div', class_='product')
-            for product in products:
-                name = product.find('h2', class_='product-name').text
-                price = product.find('span', class_='product-price').text
-                print(f"Product: {name}, Price: {price}")
-
-
-if __name__ == "__main__":
-    url_to_scrape = "https://www.pse.pl/dane-systemowe/funkcjonowanie-rb/raporty-dobowe-z-funkcjonowania-rb/podstawowe-wskazniki-cenowe-i-kosztowe/rynkowa-cena-energii-elektrycznej-rce"
-    scraper = EnergyPricing(url_to_scrape)
-    scraper.scrape_data()

@@ -1,6 +1,11 @@
 class EnergyBank:
-    def __init__(self, level: float = 50.0):
-        self._level = level
+    """
+    A class representing an energy bank
 
-    def get_bank_level(self):
-        return self._level
+    Attributes:
+        capacity (float): Energy bank capacity expressed in kWh.
+        lvl (float): Current energy bank level expressed in %.
+    """
+    def __init__(self, capacity: float = 10.5, lvl: float = 0.0):
+        self.capacity = capacity
+        self.lvl = lvl
