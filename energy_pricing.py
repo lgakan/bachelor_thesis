@@ -4,7 +4,6 @@ from selenium.webdriver.common.by import By
 import csv
 from lib.config import Config
 import shutil
-# from lib.logger import logger
 
 
 class EnergyPricing:
