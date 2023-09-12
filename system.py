@@ -1,10 +1,8 @@
-from energy_pricing import EnergyPricing
-from energy_management import  EnergyManagement
+from scripts.energy_management import EnergyManagement
 
 
 class System:
     def __init__(self):
-
         self.energy_manager = EnergyManagement()
 
 

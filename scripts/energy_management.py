@@ -1,7 +1,7 @@
-from energy_bank import EnergyBank
+from scripts.energy_bank import EnergyBank
 from lib.logger import logger
-from load import Load
-from pv import Pv
+from scripts.load import Load
+from scripts.pv import Pv
 
 
 class EnergyManagement:
