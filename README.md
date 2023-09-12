@@ -1,1 +1,3 @@
-# inz
+# Engineering thesis repository
+
+`TODO`
