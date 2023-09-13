@@ -2,11 +2,13 @@ import pandas as pd
 
 
 class CSVFile:
-    def __init__(self, path: str):
+    def __init__(self, path: str, sep: str = ',', decimal: str = '.'):
         self.path = path
+        self.sep = sep
+        self.decimal = decimal
 
     def get_file_content(self) -> pd:
-        df = pd.read_csv(self.path, sep=',')
+        df = pd.read_csv(self.path, sep=self.sep, decimal=self.decimal)
         return df.fillna('')
 
     def rename_columns_name(self, column_names: dict[str, str]):

@@ -14,9 +14,9 @@ class Load:
         self.consumption = consumption
         self.csv_file = CSVFile(Config.DATA_ENERGY_USAGE)
 
-    def get_current_consumption(self, date: str) -> float:
+    def get_consumption_by_date(self, date: str) -> float:
         return self.csv_file.get_colum_value_by_date("Load (kW)", date)
 
 # if __name__ == "__main__":
 #     load = Load()
-#     print(load.get_current_consumption("01.01.2015 06:00:00"))
+#     print(load.get_consumption_by_date("01.01.2015 06:00:00"))

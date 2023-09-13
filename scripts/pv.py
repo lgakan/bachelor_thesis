@@ -14,7 +14,8 @@ class Pv:
         direction (PhotovoltaicDirection): The photovoltaic installation: east-west or south.
     """
 
-    def __init__(self, production: float = 0.0,
+    def __init__(self,
+                 production: float = 0.0,
                  size: float = 10.0,  # TODO: Not implemented!
                  efficiency: int = 100,  # TODO: Not implemented!
                  direction: PhotovoltaicDirection = PhotovoltaicDirection.EAST_WEST):  # TODO: Not implemented!
@@ -24,10 +25,10 @@ class Pv:
         self.efficiency = efficiency
         self.direction = direction
 
-    def get_current_production(self, date: str) -> float:
+    def get_production_by_date(self, date: str) -> float:
         return self.csv_file.get_colum_value_by_date("PV gen (kW)", date)
 
 #
 # if __name__ == "__main__":
 #     pv = Pv()
-#     print(pv.get_current_production("01.01.2015 06:00:00"))
+#     print(pv.get_production_by_date("01.01.2015 06:00:00"))

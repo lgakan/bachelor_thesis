@@ -4,27 +4,27 @@ from selenium.webdriver.common.by import By
 import csv
 from lib.config import Config
 import shutil
+from lib.file_manager import CSVFile
 
 
 class EnergyPricing:
+    # TODO: NEEDS TO BE IMPLEMENTED
+    # def __init__(self):
+    #     self.prices = []
+    #
+    # @staticmethod
+    # def update_prices_file():
+    #     driver = webdriver.Chrome()
+    #     driver.get(Config.LINK_ENERGY_PRICES)
+    #     time.sleep(3)
+    #     download_button = driver.find_element(By.XPATH, f"//a[@href='{Config.LINK_CSV_DOWNLOAD}']")
+    #     download_button.click()
+    #     time.sleep(5)
+    #     shutil.move(Config.PATH_DOWNLOAD_DIR, Config.DATA_PRICES)
+
     def __init__(self):
-        self.prices = []
+        self.csv_file = CSVFile(Config.DATA_PRICES)
 
-    @staticmethod
-    def update_prices_file():
-        driver = webdriver.Chrome()
-        driver.get(Config.LINK_ENERGY_PRICES)
-        time.sleep(3)
-        download_button = driver.find_element(By.XPATH, f"//a[@href='{Config.LINK_CSV_DOWNLOAD}']")
-        download_button.click()
-        time.sleep(5)
-        shutil.move(Config.PATH_DOWNLOAD_DIR, Config.DATA_PRICES)
+    def get_rce_by_date(self, date: str):
+        return self.csv_file.get_colum_value_by_date("RCE", date)
 
-    def get_current_rce(self, hour: int) -> float | None:
-        # self.update_prices_file()
-        with open(Config.DATA_PRICES, 'r') as f:
-            csv_reader = csv.DictReader(f, delimiter=';')
-            for line in csv_reader:
-                if line["Godzina"] == str(hour):
-                    return line["RCE"]
-            return None
