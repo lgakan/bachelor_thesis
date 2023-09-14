@@ -26,20 +26,20 @@ class EnergyBank:
         empty_space = self.capacity - self._lvl
         if empty_space <= given_energy:
             self._lvl += given_energy
-            logger.info(f"Energy bank level: {self._lvl}kWh")
+            # logger.info(f"Energy bank level: {self._lvl}kWh")
             return 0.0
         else:
             self._lvl += empty_space
-            logger.info(f"Energy bank is fully charged!")
+            # logger.info(f"Energy bank is fully charged!")
             return given_energy - empty_space
 
     def release_energy(self, request_energy: float) -> float:
         if request_energy <= self._lvl:
             self._lvl -= request_energy
-            logger.info(f"Energy bank level: {self._lvl}kWh")
+            # logger.info(f"Energy bank level: {self._lvl}kWh")
             return 0.0
         else:
             rest_energy = request_energy - self._lvl
             self._lvl = 0.0
-            logger.info(f"Energy bank is empty!")
+            # logger.info(f"Energy bank is empty!")
             return rest_energy

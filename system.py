@@ -1,7 +1,5 @@
+from lib.plotter import Plotter
 from scripts.energy_manager import EnergyManager
-import matplotlib.pyplot as plt
-import numpy as np
-from lib.logger import logger
 
 
 class System:
@@ -11,9 +9,9 @@ class System:
 
 def main():
     system = System()
+    plotter = Plotter(["price", "consumption", "production", "energy_bank"])
     # system.energy_manager.log_energy_status_by_date("01.01.2015 06:00:00")
-    plot_list = []
-    for i in range(3):
+    for i in range(9):
         current_date = f"01.01.2015 0{i}:00:00"
         current_demand = system.energy_manager.get_demand_by_date(current_date)
         if current_demand >= 0:
@@ -21,11 +19,9 @@ def main():
         else:
             system.energy_manager.energy_bank.store_energy(current_demand)
         logged_values = system.energy_manager.log_energy_status_by_date(current_date)
-        plot_list.append(logged_values)
+        plotter.add_data_row([f"{i}"] + logged_values)
 
-    print(plot_list)
-    plt.plot(np.array([0, 1, 2]), np.array([i[3] for i in plot_list]))
-    plt.show()
+    plotter.plot_charts()
 
 
 if __name__ == "__main__":

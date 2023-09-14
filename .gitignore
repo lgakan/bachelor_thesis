@@ -123,6 +123,10 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# empty log folder
+!logs/.gitkeep
+logs/*.log
+
 # Other
 lib/trash/
 lib/data/ideas

@@ -22,7 +22,7 @@ class CSVFile:
 
         # df[column_name] = df[column_name].apply(len)
 
-    def get_colum_value_by_date(self, column_name: str, date: str) -> str | int | float:
+    def get_colum_value_by_date(self, column_name: str, date: str) -> str or int or float:
         df = self.get_file_content()
         return df.loc[df["Date"] == date, column_name].values[0]
 
@@ -30,4 +30,3 @@ class CSVFile:
 if __name__ == "__main__":
     csv_file = CSVFile("data/energy_production.csv")
     print(csv_file.get_file_content().head())
-    # x = csv_file.get_colum_value_by_date("Load (kW)", "01.01.2015 03:00:00")

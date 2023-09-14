@@ -1,8 +1,8 @@
-from scripts.energy_bank import EnergyBank
 from lib.logger import logger
+from scripts.energy_bank import EnergyBank
+from scripts.energy_pricing import EnergyPricing
 from scripts.load import Load
 from scripts.pv import Pv
-from scripts.energy_pricing import EnergyPricing
 
 
 class EnergyManager:
@@ -18,10 +18,10 @@ class EnergyManager:
         logger.info(f"Current consumption: {self.consumer.get_consumption_by_date(date)} kWh")
         logger.info(f"Current production: {self.producer.get_production_by_date(date):.2} kWh")
         logger.info(f"Current energy bank lvl: {self.energy_bank.get_lvl():.2} kWh \n")
-        return self.energy_pricer.get_rce_by_date(date), \
-               self.consumer.get_consumption_by_date(date), \
-               self.producer.get_production_by_date(date), \
-               self.energy_bank.get_lvl()
+        return [self.energy_pricer.get_rce_by_date(date),
+                self.consumer.get_consumption_by_date(date),
+                self.producer.get_production_by_date(date),
+                self.energy_bank.get_lvl()]
 
     def get_demand_by_date(self, date: str) -> float:
         """
