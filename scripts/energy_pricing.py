@@ -1,10 +1,13 @@
 import time
+
+import pandas
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import csv
 from lib.config import Config
 import shutil
 from lib.file_manager import CSVFile
+from lib.config import DataTypes
 
 
 class EnergyPricing:
@@ -25,6 +28,6 @@ class EnergyPricing:
     def __init__(self):
         self.csv_file = CSVFile(Config.DATA_PRICES)
 
-    def get_rce_by_date(self, date: str):
+    def get_rce_by_date(self, date: DataTypes.TIMESTAMP):
         return self.csv_file.get_colum_value_by_date("RCE", date)
 

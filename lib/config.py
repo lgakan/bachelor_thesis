@@ -1,5 +1,8 @@
-from enum import Enum
 from datetime import date
+from enum import Enum
+from typing import Union
+
+import pandas
 
 
 class CustomEnum(Enum):
@@ -23,3 +26,8 @@ class Config(CustomEnum):
 class PhotovoltaicDirection(CustomEnum):
     SOUTH = "south"
     EAST_WEST = "east_west"
+
+
+class DataTypes(CustomEnum):
+    TIMESTAMP = pandas.Timestamp
+    DF_VALUES = Union[str, int, float]

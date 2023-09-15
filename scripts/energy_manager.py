@@ -1,3 +1,6 @@
+from typing import List
+
+from lib.config import DataTypes
 from lib.logger import logger
 from scripts.energy_bank import EnergyBank
 from scripts.energy_pricing import EnergyPricing
@@ -12,7 +15,7 @@ class EnergyManager:
         self.energy_bank = EnergyBank()
         self.energy_pricer = EnergyPricing()
 
-    def log_energy_status_by_date(self, date: str):
+    def log_energy_status_by_date(self, date) -> List:
         logger.info(f"Current date: {date}")
         logger.info(f"Current energy price: {self.energy_pricer.get_rce_by_date(date)} zl")
         logger.info(f"Current consumption: {self.consumer.get_consumption_by_date(date)} kWh")
@@ -23,9 +26,5 @@ class EnergyManager:
                 self.producer.get_production_by_date(date),
                 self.energy_bank.get_lvl()]
 
-    def get_demand_by_date(self, date: str) -> float:
-        """
-        date (str): Date for which the demand will be calculated
-        :return (float): Demand for the date (production-consumption).
-        """
+    def get_demand_by_date(self, date: DataTypes.TIMESTAMP) -> float:
         return self.consumer.get_consumption_by_date(date) - self.producer.get_production_by_date(date)
