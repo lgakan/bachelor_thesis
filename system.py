@@ -8,7 +8,7 @@ from scripts.energy_manager import EnergyManager
 
 class System:
     def __init__(self):
-        self.energy_manager = EnergyManager()
+        self.energy_manager = EnergyManager(date_column="Date")
 
 
 def main():

@@ -1,6 +1,6 @@
 from lib.config import Config, PhotovoltaicDirection
 from lib.config import DataTypes
-from lib.file_manager import CSVFile
+from lib.file_management import CSVFile
 
 
 class Pv:
@@ -19,18 +19,19 @@ class Pv:
                  production: float = 0.0,
                  size: float = 10.0,  # TODO: Not implemented!
                  efficiency: int = 100,  # TODO: Not implemented!
-                 direction: PhotovoltaicDirection = PhotovoltaicDirection.EAST_WEST):  # TODO: Not implemented!
+                 direction: PhotovoltaicDirection = PhotovoltaicDirection.EAST_WEST,  # TODO: Not implemented!
+                 date_column: None | str = None):
         self.production = production
-        self.csv_file = CSVFile(Config.DATA_ENERGY_PRODUCTION)
+        self.csv_file = CSVFile(Config.DATA_ENERGY_PRODUCTION, date_column)
         self.size = size
         self.efficiency = efficiency
         self.direction = direction
 
-    def get_production_by_date(self, date: DataTypes.TIMESTAMP) -> float:
-        return self.csv_file.get_colum_value_by_date("PV gen (kW)", date)
+    def get_production_by_date(self, date_in: DataTypes.TIMESTAMP) -> float:
+        return self.csv_file.get_cell_by_date("PV gen (kW)", date_in)
 
 
 # Example
 # if __name__ == "__main__":
-#     pv = Pv()
+#     pv = Pv(date_column="Date")
 #     print(pv.get_production_by_date(pd.to_datetime("01.01.2015 06:00:00")))
