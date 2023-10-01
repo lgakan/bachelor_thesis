@@ -37,7 +37,7 @@ class CSVFile:
         else:
             raise Exception("Date column is not specified")
 
-    def get_cell_by_date(self, column_name: str, date_in: DataTypes.TIMESTAMP) -> Union[DataTypes.DF_VALUES]:
+    def get_cell_by_date(self, column_name: str, date_in: DataTypes.TIMESTAMP) -> DataTypes.DF_VALUES:
         if self.date_column is not None:
             df = self.get_file_content()
             return df.loc[df["Date"] == date_in, column_name].values[0]

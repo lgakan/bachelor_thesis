@@ -1,4 +1,5 @@
 from datetime import date
+from datetime import timedelta
 from io import StringIO
 
 import pandas as pd
@@ -14,8 +15,8 @@ class EnergyWebScraper:
     A class for web scrapping polish RCE from a web.
     """
 
-    def __init__(self, date_column: None | str = None):
-        self.csv_file = CSVFile(Config.DATA_PRICES, date_column)
+    def __init__(self, date_column: None | str = None, prices_path: str = Config.DATA_PRICES):
+        self.csv_file = CSVFile(prices_path, date_column)
         self.date_column = date_column
 
     def download_prices_by_date(self, date_in: DataTypes.TIMESTAMP = date.today()):
