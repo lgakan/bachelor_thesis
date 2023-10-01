@@ -70,4 +70,4 @@ class SmartSystem:
         self.plotter = Plotter(["price [zl]", "consumption [kWh]", "production [kWh]", "energy_bank [kWh]", "Total price"])
 
     def feed_consumption(self, date: pd.Timestamp, consumption: float):
-        pv_prod = self.producer.get_production_by_date(date)
+        pass
