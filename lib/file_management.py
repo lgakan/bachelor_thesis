@@ -1,66 +1,84 @@
-from typing import Dict, Union, List
+from typing import Dict, List
 
-import pandas
 import pandas as pd
 
 from lib.config import DataTypes
 
 
-class CSVFile:
-    """A class created to handle CSV file management."""
+class CSVManager:
+    @staticmethod
+    def get_content(path: str) -> pd.DataFrame:
+        return pd.read_csv(path)
 
-    def __init__(self, path: str, date_column: None | str = None):
+    @staticmethod
+    def save_content(path: str, df: pd.DataFrame, date_format: str, sep: str = ',') -> None:
+        df.to_csv(path, index=False, date_format=date_format, sep=sep)
+
+
+class DfManager:
+    def __init__(self, path: str, date_col: str = "Date"):
         self.path = path
-        self.date_column = date_column
+        self.date_col = date_col
+        self.csv_manager = CSVManager()
         self.date_format = "%d.%m.%Y %H:%M:%S"
 
-    def get_file_content(self) -> pd.DataFrame:
-        df = pd.read_csv(self.path)
-        if self.date_column is not None and self.date_column in df.columns:
-            df[self.date_column] = pd.to_datetime(df[self.date_column], format=self.date_format)
+    def get_from_file(self) -> pd.DataFrame:
+        df = self.csv_manager.get_content(self.path)
+        if self.date_col is not None and self.date_col in df.columns:
+            df[self.date_col] = pd.to_datetime(df[self.date_col], format=self.date_format)
         return df.fillna('')
 
-    def save_file_content(self, content: pandas.DataFrame, sep: str = ','):
-        content.to_csv(self.path, index=False, date_format=self.date_format, sep=sep)
+    def save_to_file(self, df: pd.DataFrame, sep: str = ',') -> None:
+        self.csv_manager.save_content(self.path, df, self.date_format, sep)
 
-    def update_columns_names(self, columns_names: Dict[str, str]) -> None:
-        df = self.get_file_content()
-        df.rename(columns=columns_names, inplace=True)
-        self.save_file_content(df)
+    def update_columns_names(self, cols_names: Dict[str, str]) -> None:
+        df = self.get_from_file()
+        df.rename(columns=cols_names, inplace=True)
+        self.save_to_file(df)
 
-    def update_cell_by_date(self, column_name: str, date_in: pandas.Timestamp, new_value: DataTypes.DF_VALUES):
-        df = self.get_file_content()
-        if self.date_column is not None:
-            df[self.date_column] = pd.to_datetime(df[self.date_column])
-            df.loc[df[self.date_column] == date_in, column_name] = new_value
-            self.save_file_content(df)
+    def update_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str, val_new: DataTypes.DF_VALUES) -> None:
+        df = self.get_from_file()
+        if date_col in df.columns and df[date_col].dtype == "datetime64[ns]":
+            df.loc[df[date_col] == date_in, val_col] = val_new
+            self.save_to_file(df)
         else:
-            raise Exception("Date column is not specified")
+            raise Exception(f"Column {val_col} is not valid")
 
-    def get_cell_by_date(self, column_name: str, date_in: DataTypes.TIMESTAMP) -> Union[DataTypes.DF_VALUES]:
-        if self.date_column is not None:
-            df = self.get_file_content()
-            return df.loc[df["Date"] == date_in, column_name].values[0]
+    def get_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str) -> DataTypes.DF_VALUES:
+        df = self.get_from_file()
+        if date_col in df.columns and df[date_col].dtype == "datetime64[ns]":
+            return df.loc[df[date_col] == date_in, val_col].values[0]
         else:
-            raise Exception("Date column is not specified")
+            raise Exception(f"Column {val_col} is not valid")
 
-    def update_column_by_name(self, column_name: str, data: List[DataTypes.DF_VALUES]) -> None:
-        df = self.get_file_content()
-        if column_name in df.columns and len(data) == df.shape[0]:
-            df.update({column_name: data})
-            self.save_file_content(df)
+    def get_subset_by_date(self, date_col: str, date_start: pd.Timestamp, date_end: pd.Timestamp) -> pd.DataFrame:
+        df = self.get_from_file()
+        return df[(df[date_col] >= date_start) & (df[date_col] <= date_end)]
+
+    def is_date_in_file(self, date_col: str, date_in: pd.Timestamp) -> bool:
+        first_date, last_date = self.get_from_file()[date_col].iloc[[0, -1]]
+        if not (first_date <= date_in <= last_date):
+            return False
+        return True
+
+    def update_column_by_name(self, col_name: str, data: List[DataTypes.DF_VALUES]) -> None:
+        df = self.get_from_file()
+        if col_name in df.columns and len(data) == df.shape[0]:
+            df.update({col_name: data})
+            self.save_to_file(df)
         else:
-            raise Exception(f"{column_name} not in {df.columns.to_list()} or {df.shape[0]} != {len(data)}")
+            raise Exception(f"{col_name} not in {df.columns.to_list()} or {df.shape[0]} != {len(data)}")
 
 
 if __name__ == "__main__":
     df_example = pd.DataFrame(
-        {'D': [pd.to_datetime(f"01.0{i}.2015 06:00:00", format="%d.%m.%Y %H:%M:%S") for i in range(1, 4)],
-         'A': [1, 2, 3],
-         'B': [400, 500, 600]})
-    csv_file = CSVFile("test_prices_delete.csv", "Date")
-    csv_file.save_file_content(df_example)
-    df_new = csv_file.get_file_content()
-    csv_file.update_columns_names({'D': "Date"})
-    csv_file.update_cell_by_date('A', pd.to_datetime("01.02.2015 06:00:00"), 999)
-    csv_file.update_column_by_name('B', [9, 9, 9])
+        {'D': [pd.to_datetime(f"01.0{i}.2015 06:00:00", format="%d.%m.%Y %H:%M:%S") for i in range(1, 8)],
+         'A': [x for x in range(1, 8)],
+         'B': [x * 100 for x in range(1, 8)]})
+
+    df_manager = DfManager("test_prices_delete.csv")
+    df_manager.save_to_file(df_example)
+    df_example = df_manager.get_from_file()
+    df_manager.update_columns_names({'D': "Date"})
+    df_manager.update_cell_by_date("Date", pd.to_datetime("01.02.2015 06:00:00", format="%d.%m.%Y %H:%M:%S"), 'A', 999)
+    df_manager.update_column_by_name('B', [9 for _ in range(1, 8)])

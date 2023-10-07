@@ -1,6 +1,7 @@
+import pandas as pd
+
 from lib.config import Config, PhotovoltaicDirection
-from lib.config import DataTypes
-from lib.file_management import CSVFile
+from lib.file_management import DfManager
 
 
 class Pv:
@@ -16,19 +17,20 @@ class Pv:
     """
 
     def __init__(self,
+                 date_column: None | str = None,
                  production: float = 0.0,
                  size: float = 10.0,  # TODO: Not implemented!
                  efficiency: int = 100,  # TODO: Not implemented!
-                 direction: PhotovoltaicDirection = PhotovoltaicDirection.EAST_WEST,  # TODO: Not implemented!
-                 date_column: None | str = None):
+                 direction: PhotovoltaicDirection = PhotovoltaicDirection.EAST_WEST):  # TODO: Not implemented!
         self.production = production
-        self.csv_file = CSVFile(Config.DATA_ENERGY_PRODUCTION, date_column)
+        self.df_manager = DfManager(Config.DATA_ENERGY_PRODUCTION, date_column)
         self.size = size
         self.efficiency = efficiency
         self.direction = direction
+        self.date_column = date_column
 
-    def get_production_by_date(self, date_in: DataTypes.TIMESTAMP) -> float:
-        return self.csv_file.get_cell_by_date("PV gen (kW)", date_in)
+    def get_production_by_date(self, date_in: pd.Timestamp) -> float:
+        return self.df_manager.get_cell_by_date(self.date_column, date_in, "PV gen (kW)")
 
 
 # Example
