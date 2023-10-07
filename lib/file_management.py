@@ -42,14 +42,24 @@ class DfManager:
             df.loc[df[date_col] == date_in, val_col] = val_new
             self.save_to_file(df)
         else:
-            raise Exception("Colum name is not valid")
+            raise Exception(f"Column {val_col} is not valid")
 
     def get_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str) -> DataTypes.DF_VALUES:
         df = self.get_from_file()
         if date_col in df.columns and df[date_col].dtype == "datetime64[ns]":
             return df.loc[df[date_col] == date_in, val_col].values[0]
         else:
-            raise Exception("Colum name is not valid")
+            raise Exception(f"Column {val_col} is not valid")
+
+    def get_subset_by_date(self, date_col: str, date_start: pd.Timestamp, date_end: pd.Timestamp) -> pd.DataFrame:
+        df = self.get_from_file()
+        return df[(df[date_col] >= date_start) & (df[date_col] <= date_end)]
+
+    def is_date_in_file(self, date_col: str, date_in: pd.Timestamp) -> bool:
+        first_date, last_date = self.get_from_file()[date_col].iloc[[0, -1]]
+        if not (first_date <= date_in <= last_date):
+            return False
+        return True
 
     def update_column_by_name(self, col_name: str, data: List[DataTypes.DF_VALUES]) -> None:
         df = self.get_from_file()
@@ -62,13 +72,13 @@ class DfManager:
 
 if __name__ == "__main__":
     df_example = pd.DataFrame(
-        {'D': [pd.to_datetime(f"01.0{i}.2015 06:00:00", format="%d.%m.%Y %H:%M:%S") for i in range(1, 4)],
-         'A': [1, 2, 3],
-         'B': [400, 500, 600]})
+        {'D': [pd.to_datetime(f"01.0{i}.2015 06:00:00", format="%d.%m.%Y %H:%M:%S") for i in range(1, 8)],
+         'A': [x for x in range(1, 8)],
+         'B': [x * 100 for x in range(1, 8)]})
 
     df_manager = DfManager("test_prices_delete.csv")
     df_manager.save_to_file(df_example)
     df_example = df_manager.get_from_file()
     df_manager.update_columns_names({'D': "Date"})
     df_manager.update_cell_by_date("Date", pd.to_datetime("01.02.2015 06:00:00", format="%d.%m.%Y %H:%M:%S"), 'A', 999)
-    df_manager.update_column_by_name('B', [9, 9, 9])
+    df_manager.update_column_by_name('B', [9 for _ in range(1, 8)])

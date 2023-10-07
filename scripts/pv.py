@@ -1,5 +1,6 @@
+import pandas as pd
+
 from lib.config import Config, PhotovoltaicDirection
-from lib.config import DataTypes
 from lib.file_management import DfManager
 
 
@@ -28,7 +29,7 @@ class Pv:
         self.direction = direction
         self.date_column = date_column
 
-    def get_production_by_date(self, date_in: DataTypes.TIMESTAMP) -> float:
+    def get_production_by_date(self, date_in: pd.Timestamp) -> float:
         return self.df_manager.get_cell_by_date(self.date_column, date_in, "PV gen (kW)")
 
 

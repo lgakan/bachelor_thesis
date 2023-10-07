@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import Union
 
-import pandas
-
 
 class CustomEnum(Enum):
     def __get__(self, instance, owner):
@@ -18,7 +16,7 @@ class Config(CustomEnum):
     PATH_DOWNLOAD_DIR = "C:/Users/Pawel/Downloads/PL_CENY_RYN_EN_20230830_20230829144234.csv"
 
     # http_links
-    LINK_CSV_DOWNLOAD = f"https://www.pse.pl/getcsv/-/export/csv/PL_CENY_RYN_EN/data/"
+    CSV_DOWNLOAD = f"https://www.pse.pl/getcsv/-/export/csv/PL_CENY_RYN_EN/"
 
 
 class PhotovoltaicDirection(CustomEnum):
@@ -27,5 +25,4 @@ class PhotovoltaicDirection(CustomEnum):
 
 
 class DataTypes(CustomEnum):
-    TIMESTAMP = pandas.Timestamp
     DF_VALUES = Union[str, int, float]
