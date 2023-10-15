@@ -23,8 +23,10 @@ class EnergyBank:
         return self._lvl
 
     def store_energy(self, given_energy: float) -> float:
+        if given_energy < 0:
+            raise Exception(f"Given energy {given_energy} is lower than 0")
         empty_space = self.capacity - self._lvl
-        if empty_space <= given_energy:
+        if empty_space >= given_energy:
             self._lvl += given_energy
             return 0.0
         else:
@@ -32,6 +34,8 @@ class EnergyBank:
             return given_energy - empty_space
 
     def release_energy(self, request_energy: float) -> float:
+        if request_energy < 0:
+            raise Exception(f"Given energy {request_energy} is lower than 0")
         if request_energy <= self._lvl:
             self._lvl -= request_energy
             return 0.0
