@@ -36,7 +36,7 @@ class EnergyWebScraper:
         df.drop(["Data", "Godzina"], axis=1, inplace=True)
         self.df_manager.save_to_file(df)
 
-    def get_rce_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> List[float]:
+    def get_rce_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> Union[List[float], float]:
         if date_end is None:
             if not self.df_manager.is_date_in_file(self.date_column, date_start):
                 self.get_prices_file_by_date(date_start)

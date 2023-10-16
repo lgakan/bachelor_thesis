@@ -3,15 +3,15 @@ from datetime import timedelta
 import pandas as pd
 
 from lib.logger import logger
-from scripts.system import RawSystem, PvSystem, SemiSmartSystem, SmartSystem
+from scripts.system import BareSystem, PvSystem, RawFullSystem, SmartSystem
 
 
 def main():
-    date_start = pd.to_datetime("04.09.2020 00:00:00", format="%d.%m.%Y %H:%M:%S")
-    date_stop = pd.to_datetime("5.09.2020 8:00:00", format="%d.%m.%Y %H:%M:%S")
-    raw_system = RawSystem()
+    date_start = pd.to_datetime("04.09.2020 05:00:00", format="%d.%m.%Y %H:%M:%S")
+    date_stop = pd.to_datetime("04.09.2020 10:00:00", format="%d.%m.%Y %H:%M:%S")
+    raw_system = BareSystem()
     pv_system = PvSystem()
-    semi_smart_system = SemiSmartSystem()
+    semi_smart_system = RawFullSystem()
     smart_system = SmartSystem()
 
     for current_date in pd.date_range(start=date_start, end=date_stop, freq=timedelta(hours=1)):

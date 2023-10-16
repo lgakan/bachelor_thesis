@@ -18,6 +18,7 @@ class EnergyBank:
         self.capacity = capacity
         self._lvl = lvl
         self.efficiency = efficiency
+        self.min_lvl = 0.0
 
     def get_lvl(self) -> float:
         return self._lvl
