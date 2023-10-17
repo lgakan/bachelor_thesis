@@ -4,7 +4,6 @@ from typing import List, Union
 
 import pandas as pd
 
-from lib.logger import logger
 from lib.plotter import Plotter
 from scripts.energy_bank import EnergyBank
 from scripts.energy_pricing import EnergyWebScraper
@@ -68,20 +67,15 @@ class RawFullSystem(SystemBase):
         reduced_consumption_by_pv = consumption - pv_prod
         if reduced_consumption_by_pv > 0:
             reduced_consumption_by_bank = reduced_consumption_by_pv - self.energy_bank.get_lvl()
-            logger.info(f"reduced_consumption_by_bank: {reduced_consumption_by_bank}")
             if reduced_consumption_by_bank > 0:
                 self.energy_bank.release_energy(self.energy_bank.get_lvl())
                 cost = reduced_consumption_by_bank * rce_price
-                logger.info(f"cost: {cost}")
             else:
                 self.energy_bank.release_energy(reduced_consumption_by_pv)
                 cost = 0
         else:
             energy_surplus = self.energy_bank.store_energy(-reduced_consumption_by_pv)
-            logger.info(f"energy_surplus: {energy_surplus}")
             cost = -energy_surplus * rce_price
-            logger.info(f"else_cost: {cost}")
-        logger.info("")
         self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, self.energy_bank.get_lvl(), self.summed_cost])
 
