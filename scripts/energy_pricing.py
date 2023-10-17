@@ -4,7 +4,7 @@ from typing import Union, List
 
 import pandas as pd
 import requests
-
+import os
 from lib.config import Config
 from lib.file_management import DfManager
 from lib.logger import logger
@@ -36,7 +36,9 @@ class EnergyWebScraper:
         df.drop(["Data", "Godzina"], axis=1, inplace=True)
         self.df_manager.save_to_file(df)
 
-    def get_rce_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> List[float]:
+    def get_rce_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> Union[List[float], float]:
+        if not os.path.isfile(self.df_manager.path):
+            self.get_prices_file_by_date(date_start)
         if date_end is None:
             if not self.df_manager.is_date_in_file(self.date_column, date_start):
                 self.get_prices_file_by_date(date_start)
