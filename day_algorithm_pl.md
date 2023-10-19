@@ -1,10 +1,12 @@
-# DayAlgorithm:
-## Dane Wejsciowe:
+# Day Algorithm:
+## Dane Wejściowe
 * Maksymalna wartość energii w magazynie: `min_b`
 * Minimalna wartość energii w magazynie:  `max_b`
 * Stan magazynu energii: `start_b`
 * Ceny kupna/sprzedaży dla każdej godziny: `prices`
 * Bilanse energetyczne dla każdej godziny (produkcja - konsumpcja):  `hourly_balances`
+## Dane Wyjściowe 
+* Zaktualizowana tablica `hourly_balances`
 
 ## Pseudokod
 1. Obliczenie wstępego końcowego stanu magazynu `predicted_b` # Obliczenie poziomu magazynu energii gdyby wszystkie bilanse były pokryte z magazynu
@@ -78,6 +80,7 @@ Jeśli nie to `current_need` = `i`
 `new_b` + `sum(positive_balances)` = 1.89 -> 1.89 < 3.0\
 *KONIEC iteracji*\
 `need` = 1.71 - 0.6 = 1.11
+
 -------------
 #### 2 iteracja 
 `i2` = 3\
@@ -91,6 +94,7 @@ Jeśli nie to `current_need` = `i`
 `new_b` + `sum(positive_balances)` = 2.21 -> 2.21 < 3.0\
 *KONIEC iteracji*\
 `need` = 1.11 - 0.32 = 0.79
+
 -------------
 #### 3 iteracja 
 `i3` = 0\
