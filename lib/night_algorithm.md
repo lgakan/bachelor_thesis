@@ -83,12 +83,11 @@ _step 8_\
 -0.85 &lt; 0.0 &rarr; It's `true`
 
 _step 9_\
-`inner_balances[idx]` = -0.85
+`inner_balances[idx]` = -0.85\
 `extra` = -0.28\
 It's possible so it's `true`\
 `extra` = -0.28\
 `hourly_balances` = [-0.57, -0.53, 0.1, -0.5, 0.1]
----
 
 _2nd iteration `i`=1_\
 1.44 - 0.53 = 0.93\
