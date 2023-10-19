@@ -17,8 +17,8 @@ Oznacza to że nie było potrzeby zakupu energii z sieci.
 Oznacza to, że  w okresie od początku algorytmu do `i`-tego bilansu zużyto całą energię z magazynu energii. \
 Algorytm ma za zadnie zoptymalizować miejsca korzystania z magazynu tak, aby poziom jego naładowania spadł maksymalnie do 0. \
 Osiąga to za pomocą wybrania najtańszych godzin i kupowania w nich odpowiedniej ilości energii.
-3. Obliczamy wartość `extra`. Jest to wartość jaką należy zabrać z `i`-tego bilansu tak aby poziom naładowania magazynu spadł maksymalnie do 0.
-4. Tworzymy tablice `inner_balances` która zawiera wartości `hourly_balances` od początku do `i`-tego bilansu.
+3. Tworzymy tablice `inner_balances` która zawiera wartości `hourly_balances` od początku do `i`-tego bilansu.
+4. Obliczamy wartość `extra`. Jest to wartość jaką należy zabrać z `i`-tego bilansu tak aby poziom naładowania magazynu spadł maksymalnie do 0.
 5. Wyznaczamy tablice `idx_order`, która zawiera indeksy cen bilansów z tablicy `inner_balances`, posortowane od najniższej do najwyższej.
 6. Przechodzimy po tablicy `idx_order`. Dla `j`-tego bilasnu:
 7. Sprawdzamy czy obecnie najtańszą godziną jest ta z bilansem z ostatniego elementu tablicy `inner_balances`.
@@ -30,7 +30,6 @@ Osiąga to za pomocą wybrania najtańszych godzin i kupowania w nich odpowiedni
 9. Sprawdzamy czy bilans z `inner_balances` o `j`-tym indeksie można obniżyć o `extra`.
    1. Jeśli tak, obniżamy go, zerujemy `extra`, aktualizujemy `hourly_balances` i kończymy iteracje
    2. Jeśli nie, obniżamy `extra` o wartość tego bilansu, sam bilans zmieniamy na 0, aktualizujemy `inner_balances` i idziemy dalej
-
 ## Przykład
 `min_b` = 0.0\
 `max_b` = 3.0\
