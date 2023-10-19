@@ -4,7 +4,7 @@ from typing import List, Union
 
 import pandas as pd
 
-from lib.plotter import Plotter
+from scripts.plotter import Plotter
 from scripts.energy_bank import EnergyBank
 from scripts.energy_pricing import EnergyWebScraper
 from scripts.load import Load

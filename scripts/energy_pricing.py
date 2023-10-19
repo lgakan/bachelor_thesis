@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import os
 from lib.config import Config
-from lib.file_management import DfManager
+from scripts.file_management import DfManager
 from lib.logger import logger
 
 

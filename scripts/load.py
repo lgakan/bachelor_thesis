@@ -4,7 +4,7 @@ from typing import Union, List
 import pandas as pd
 
 from lib.config import Config
-from lib.file_management import DfManager
+from scripts.file_management import DfManager
 
 
 class Load:

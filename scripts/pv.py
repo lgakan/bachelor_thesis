@@ -4,7 +4,7 @@ from typing import List, Union
 import pandas as pd
 
 from lib.config import Config, PhotovoltaicDirection
-from lib.file_management import DfManager
+from scripts.file_management import DfManager
 
 
 class Pv:
