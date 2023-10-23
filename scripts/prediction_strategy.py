@@ -1,6 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 from typing import List
+from scripts.energy_bank import EnergyBank
 
 import numpy as np
 
@@ -15,22 +16,25 @@ class DayPredictionStrategy(PredictionStrategy):
     def __init__(self, min_energy, max_energy):
         self.min_energy = min_energy
         self.max_energy = max_energy
+        self.energy_bank = EnergyBank()
 
     @staticmethod
     def sort_list_idxes_ascending(prices) -> List[int]:
         return np.argsort(prices)[:].tolist()
 
-    def forecast_final_energy_lvl(self, energy_lvl, balances: List[float]) -> float:
+    def forecast_final_energy_lvl(self, energy_lvl, balances: List[float]) -> (float, List[float]):
         current_energy_lvl = energy_lvl
-        for energy_value in balances:
-            potential_energy_lvl = current_energy_lvl + energy_value
+        forbidden_idx = []
+        for energy_idx in range(len(balances)):
+            potential_energy_lvl = current_energy_lvl + balances[energy_idx]
             if potential_energy_lvl >= self.max_energy:
                 current_energy_lvl = self.max_energy
             elif potential_energy_lvl <= self.min_energy:
                 current_energy_lvl = 0.0
+                forbidden_idx.append(energy_idx)
             else:
-                current_energy_lvl += energy_value
-        return round(current_energy_lvl, 2)
+                current_energy_lvl += balances[energy_idx]
+        return round(current_energy_lvl, 2), forbidden_idx
 
     def _optimize_balance(self, energy_lvl: float, need: float, balances: List[float]) -> (List[float], float):
         positive_balances = [i for i in balances if i > 0]
@@ -51,10 +55,10 @@ class DayPredictionStrategy(PredictionStrategy):
         return balances, need - current_need
 
     def get_plan(self, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
-        predicted_final_lvl = self.forecast_final_energy_lvl(start_energy, hourly_balances)
+        predicted_final_lvl, forbidden_idx = self.forecast_final_energy_lvl(start_energy, hourly_balances)
         negative_index_list = [idx for idx, value in enumerate(hourly_balances) if value < 0.0]
         if predicted_final_lvl >= self.max_energy:
-            return [round(x, 2) for x in hourly_balances]
+            return [round(hourly_balances[i], 2) if i not in forbidden_idx else 0.0 for i in range(len(hourly_balances))]
         need = round(self.max_energy - predicted_final_lvl, 2)
         positive_balances = [i for i in hourly_balances if i > 0]
         print(f"predicted_bank_lvl: {predicted_final_lvl}")
@@ -66,7 +70,7 @@ class DayPredictionStrategy(PredictionStrategy):
                 if idx in negative_index_list:
                     if need <= 0.0:
                         break
-                    new_start_energy = self.forecast_final_energy_lvl(start_energy, hourly_balances[:idx])
+                    new_start_energy, _ = self.forecast_final_energy_lvl(start_energy, hourly_balances[:idx])
                     hourly_balances[idx:], need = self._optimize_balance(new_start_energy, need, hourly_balances[idx:])
         else:
             positive_hourly_balances = [0 if i < 0 else i for i in hourly_balances]
@@ -104,10 +108,7 @@ class NightPredictionStrategy(PredictionStrategy):
             elif potential_energy_lvl >= self.min_energy:
                 current_energy_lvl = potential_energy_lvl
             else:
-                if i == 0 or i == len(hourly_balances) - 1:
-                    hourly_balances[i] -= potential_energy_lvl
-                    current_energy_lvl = 0.0
-                    continue
+                current_energy_lvl = 0.0
                 inner_balances = hourly_balances[:i + 1]
                 extra = self.forecast_final_energy_lvl(start_energy, inner_balances[:-1]) + inner_balances[-1]  
                 idx_order = self.sort_list_idxes_ascending(prices[:i + 1])
@@ -121,11 +122,13 @@ class NightPredictionStrategy(PredictionStrategy):
                             if inner_balances[idx] <= extra:
                                 inner_balances[idx] -= extra
                                 hourly_balances[:i + 1] = inner_balances[:i + 1]
+                                hourly_balances = [round(x, 2) for x in hourly_balances]
                                 break
                             else:
                                 extra -= inner_balances[idx]
                                 inner_balances[idx] = 0.0
                                 hourly_balances[:i + 1] = inner_balances[:i + 1]
+                                hourly_balances = [round(x, 2) for x in hourly_balances]
                         else:
                             continue
         return [round(x, 2) for x in hourly_balances]

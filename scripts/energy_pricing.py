@@ -21,7 +21,7 @@ class EnergyWebScraper:
 
     @staticmethod
     def download_prices_by_date(date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> pd.DataFrame:
-        if date_end is None:
+        if date_end is None or date_start.strftime('%Y%m%d') == date_end.strftime('%Y%m%d'):
             url = Config.CSV_DOWNLOAD + "data/" + date_start.strftime('%Y%m%d')
         else:
             url = Config.CSV_DOWNLOAD + "data_od/" + date_start.strftime("%Y%m%d") + "/data_do/" + date_end.strftime("%Y%m%d")
@@ -44,7 +44,7 @@ class EnergyWebScraper:
                 self.get_prices_file_by_date(date_start)
             return self.df_manager.get_cell_by_date(self.date_column, date_start, "RCE")
         else:
-            if not (self.df_manager.is_date_in_file(self.date_column, date_start) or self.df_manager.is_date_in_file(self.date_column, date_end)):
+            if not (self.df_manager.is_date_in_file(self.date_column, date_start) and self.df_manager.is_date_in_file(self.date_column, date_end)):
                 self.get_prices_file_by_date(date_start, date_end)
             dates = pd.date_range(start=date_start, end=date_end, freq=timedelta(hours=1))
             return [self.df_manager.get_cell_by_date(self.date_column, x, "RCE") for x in dates]
