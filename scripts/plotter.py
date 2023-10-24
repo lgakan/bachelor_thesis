@@ -21,11 +21,12 @@ class Plotter:
     def add_data_row(self, data_row: List[DataTypes.DF_VALUES]) -> None:
         self.df.loc[len(self.df)] = data_row
 
-    def plot_charts(self, title: str = "System Data") -> None:
+    def plot_charts(self, title: str = "System Data") -> pd.DataFrame:
         axes = self.df.plot(kind='line', x='Date', subplots=True, figsize=(10, 10), sharex=True, title=title)
         for idx, column_name in enumerate(self.df.columns[1:]):
             axes[idx].set_ylabel(column_name)
         plt.show()
+        return self.df
 
 
 if __name__ == "__main__":
