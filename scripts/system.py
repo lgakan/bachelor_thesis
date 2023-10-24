@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from datetime import timedelta
+from lib.logger import logger
 from typing import List, Union
 
 import pandas as pd
@@ -35,7 +36,7 @@ class BareSystem(SystemBase):
         consumption = self.consumer.get_consumption_by_date(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         cost = consumption * rce_price
-        self.summed_cost += cost
+        self.summed_cost += cost / 1000
         self.plotter.add_data_row([date_in, rce_price, consumption, 0, 0, self.summed_cost])
 
 
@@ -50,7 +51,7 @@ class PvSystem(SystemBase):
         pv_prod = self.producer.get_production_by_date(date_in)
         reduced_consumption_by_pv = consumption - pv_prod
         cost = reduced_consumption_by_pv * rce_price
-        self.summed_cost += cost
+        self.summed_cost += cost / 1000
         self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, 0, self.summed_cost])
 
 
@@ -64,20 +65,14 @@ class RawFullSystem(SystemBase):
         consumption = self.consumer.get_consumption_by_date(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         pv_prod = self.producer.get_production_by_date(date_in)
-        reduced_consumption_by_pv = consumption - pv_prod
-        if reduced_consumption_by_pv > 0:
-            reduced_consumption_by_bank = reduced_consumption_by_pv - self.energy_bank.get_lvl()
-            if reduced_consumption_by_bank > 0:
-                self.energy_bank.release_energy(self.energy_bank.get_lvl())
-                cost = reduced_consumption_by_bank * rce_price
-            else:
-                self.energy_bank.release_energy(reduced_consumption_by_pv)
-                cost = 0
+        balance = pv_prod - consumption
+        balance_after_bank = self.energy_bank.manage_energy(balance)
+        if balance_after_bank > 0:
+            cost = -balance_after_bank * rce_price
         else:
-            energy_surplus = self.energy_bank.store_energy(-reduced_consumption_by_pv)
-            cost = -energy_surplus * rce_price
-        self.summed_cost += cost
-        self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, self.energy_bank.get_lvl(), self.summed_cost])
+            cost = -balance_after_bank * rce_price
+        self.summed_cost += cost / 1000
+        self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, self.energy_bank.lvl, self.summed_cost])
 
 
 class SmartSystem(SystemBase):
@@ -118,31 +113,40 @@ class SmartSystem(SystemBase):
             else:
                 self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
                 end = start.replace(hour=morning_hour)
+            print(f"New plan type: {type(self.prediction_strategy)}")
             rce_prices = self.energy_pricer.get_rce_by_date(start, end)
             consumptions = self.consumer.get_consumption_by_date(start, end)
             productions = self.producer.get_production_by_date(start, end)
             balances = [round(prod - cons, 2) for (prod, cons) in zip(productions, consumptions)]
             dates = pd.date_range(start=start, end=end, freq=timedelta(hours=1))
-            energy_plan = self.prediction_strategy.get_plan(self.energy_bank.get_lvl(), rce_prices, balances)
+            print(f"Input rce_prices: {rce_prices}")
+            print(f"Input balances: {balances}")
+            print(f"Input rce_prices: {rce_prices}")
+            energy_plan = self.prediction_strategy.get_plan(self.energy_bank.lvl, rce_prices, balances)
+            print(f"Input energy_plan: {energy_plan}")
+            print()
             self.energy_plan = {k: v for k, v in zip(dates, energy_plan)}
 
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
-        balance = round(production - consumption, 2)
-        if self.energy_plan[date_in] == balance:
-            if balance >= 0.0:
-                self.energy_bank.store_energy(balance)
-            else:
-                self.energy_bank.release_energy(abs(balance))
+        current_balance = round(production - consumption, 2)
+        predicted_balance = self.energy_plan[date_in]
+        print(f"Current balance: {current_balance}")
+        if current_balance >= 0:
+            if current_balance != predicted_balance:
+                logger.critical(f"{current_balance} != {predicted_balance}")
+            energy_surplus = self.energy_bank.manage_energy(current_balance)
+            cost = -energy_surplus * rce_price
         else:
-            if self.energy_plan[date_in] > 0.0:
-                raise Exception(f"{self.energy_plan[date_in]} and {balance}")
-            else:
-                self.energy_bank.release_energy(abs(self.energy_plan[date_in]))
-                buy_energy = self.energy_plan[date_in] - balance
-                cost = buy_energy * rce_price
-                self.summed_cost += cost
+            if predicted_balance > 0:
+                raise Exception(f"{predicted_balance} CAN NOT BE > 0")
+            balance_after_bank = self.energy_bank.manage_energy(predicted_balance)
+            if balance_after_bank < 0:
+                raise Exception("BANK LVL CAN NOT BE LOWER THAN 0")
+            balance_diff = round(current_balance - predicted_balance, 2)
+            cost = -balance_diff * rce_price
+        self.summed_cost += cost / 1000
         if self.energy_plan.get(date_in + timedelta(hours=1)) is None:
             self.energy_plan = None
-        self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.get_lvl(), self.summed_cost])
+        self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])

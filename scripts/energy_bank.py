@@ -1,6 +1,3 @@
-from lib.logger import logger
-
-
 class EnergyBank:
     """
     A class representing an energy bank
@@ -13,19 +10,31 @@ class EnergyBank:
 
     def __init__(self,
                  capacity: float = 3.0,
+                 min_lvl: float = 0.0,
                  lvl: float = 1.0,
-                 efficiency: int = 100):                 # TODO: Not implemented!
+                 efficiency: int = 100):     # TODO: Not implemented!
         self.capacity = capacity
+        self.min_lvl = min_lvl
         self._lvl = lvl
         self.efficiency = efficiency
-        self.min_lvl = 0.0
 
-    def get_lvl(self) -> float:
+    @property
+    def lvl(self):
         return self._lvl
 
-    def store_energy(self, given_energy: float) -> float:
+    @lvl.setter
+    def lvl(self, new_lvl):
+        self._lvl = round(new_lvl, 2)
+
+    def manage_energy(self, input_energy: float) -> float:
+        if input_energy < 0:
+            return round(self._release_energy(input_energy), 2)
+        else:
+            return round(self._store_energy(input_energy), 2)
+
+    def _store_energy(self, given_energy: float) -> float:
         if given_energy < 0:
-            raise Exception(f"Given energy {given_energy} is lower than 0")
+            raise Exception(f"Energy: {given_energy} < 0")
         empty_space = self.capacity - self._lvl
         if empty_space >= given_energy:
             self._lvl += given_energy
@@ -34,13 +43,13 @@ class EnergyBank:
             self._lvl += empty_space
             return given_energy - empty_space
 
-    def release_energy(self, request_energy: float) -> float:
-        if request_energy < 0:
-            raise Exception(f"Given energy {request_energy} is lower than 0")
-        if request_energy <= self._lvl:
-            self._lvl -= request_energy
+    def _release_energy(self, request_energy: float) -> float:
+        if request_energy > 0:
+            raise Exception(f"Energy: {request_energy} > 0")
+        if abs(request_energy) <= self._lvl:
+            self._lvl += request_energy
             return 0.0
         else:
-            rest_energy = request_energy - self._lvl
+            rest_energy = request_energy + self._lvl
             self._lvl = 0.0
             return rest_energy
