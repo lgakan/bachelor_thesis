@@ -130,3 +130,4 @@ logs/*.log
 # Other
 lib/trash/
 lib/data/ideas
+lib/data/prices.csv
