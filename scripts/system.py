@@ -130,7 +130,6 @@ class SmartSystem(SystemBase):
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
-        # balance = round(production - consumption, 2)
         current_balance = round(production - consumption, 2)
         predicted_balance = self.energy_plan[date_in]
         print(f"Current balance: {current_balance}")

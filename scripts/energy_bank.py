@@ -10,12 +10,13 @@ class EnergyBank:
 
     def __init__(self,
                  capacity: float = 3.0,
+                 min_lvl: float = 0.0,
                  lvl: float = 1.0,
-                 efficiency: int = 100):  # TODO: Not implemented!
+                 efficiency: int = 100):     # TODO: Not implemented!
         self.capacity = capacity
+        self.min_lvl = min_lvl
         self._lvl = lvl
         self.efficiency = efficiency
-        self.min_lvl = 0.0
 
     @property
     def lvl(self):
