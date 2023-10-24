@@ -2,7 +2,7 @@ from abc import abstractmethod
 from datetime import timedelta
 from lib.logger import logger
 from typing import List, Union
-
+import random
 import pandas as pd
 
 from scripts.plotter import Plotter
@@ -17,7 +17,7 @@ class SystemBase:
     def __init__(self):
         self.summed_cost = 0
         self.energy_pricer = EnergyWebScraper(date_column="Date")
-        self.plotter = Plotter(["price [zl]", "consumption [kWh]", "production [kWh]", "energy_bank [kWh]", "Total price"])
+        self.plotter = Plotter(["price [zl]", "consumption [kWh]", "production [kWh]", "energy_bank [kWh]", "Total price [zl]"])
         self.consumer = Load(date_column="Date")
 
     @abstractmethod
@@ -25,7 +25,7 @@ class SystemBase:
         pass
 
     def plot_charts(self):
-        self.plotter.plot_charts(f"System Data - {self.__class__.__name__}")
+        return self.plotter.plot_charts(f"System Data - {self.__class__.__name__}")
 
 
 class BareSystem(SystemBase):
@@ -113,29 +113,29 @@ class SmartSystem(SystemBase):
             else:
                 self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
                 end = start.replace(hour=morning_hour)
-            print(f"New plan type: {type(self.prediction_strategy)}")
+            logger.info(f"New plan type: {type(self.prediction_strategy)}")
             rce_prices = self.energy_pricer.get_rce_by_date(start, end)
             consumptions = self.consumer.get_consumption_by_date(start, end)
             productions = self.producer.get_production_by_date(start, end)
             balances = [round(prod - cons, 2) for (prod, cons) in zip(productions, consumptions)]
             dates = pd.date_range(start=start, end=end, freq=timedelta(hours=1))
-            print(f"Input rce_prices: {rce_prices}")
-            print(f"Input balances: {balances}")
-            print(f"Input rce_prices: {rce_prices}")
+            logger.info(f"Input rce_prices: {rce_prices}")
+            logger.info(f"Input balances: {balances}")
+            logger.info(f"Input rce_prices: {rce_prices}")
             energy_plan = self.prediction_strategy.get_plan(self.energy_bank.lvl, rce_prices, balances)
-            print(f"Input energy_plan: {energy_plan}")
-            print()
+            logger.info(f"Input energy_plan: {energy_plan}")
+            logger.info("")
             self.energy_plan = {k: v for k, v in zip(dates, energy_plan)}
 
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
         current_balance = round(production - consumption, 2)
+        # current_balance = round(current_balance * random.uniform(0.8, 1.2), 2)
         predicted_balance = self.energy_plan[date_in]
-        print(f"Current balance: {current_balance}")
+        logger.info(f"Current balance: {current_balance}")
+        logger.info(f"Predicted balance: {predicted_balance}")
         if current_balance >= 0:
-            if current_balance != predicted_balance:
-                logger.critical(f"{current_balance} != {predicted_balance}")
             energy_surplus = self.energy_bank.manage_energy(current_balance)
             cost = -energy_surplus * rce_price
         else:
