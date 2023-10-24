@@ -127,6 +127,9 @@ dmypy.json
 !logs/.gitkeep
 logs/*.log
 
+#streamlit
+.streamlit
+
 # Other
 lib/trash/
 lib/data/ideas
