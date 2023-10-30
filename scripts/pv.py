@@ -20,7 +20,7 @@ class Pv:
     """
 
     def __init__(self,
-                 date_column: None | str = None,
+                 date_column: Union[None, str] = None,
                  production: float = 0.0,
                  size: float = 10.0,  # TODO: Not implemented!
                  efficiency: int = 100,  # TODO: Not implemented!

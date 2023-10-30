@@ -24,6 +24,8 @@ class Load:
             return self.df_manager.get_cell_by_date(self.date_column, date_start, "Load (kW)")
         else:
             if not (self.df_manager.is_date_in_file(self.date_column, date_start) or self.df_manager.is_date_in_file(self.date_column, date_end)):
+                print(self.df_manager.is_date_in_file(self.date_column, date_start))
+                print(self.df_manager.is_date_in_file(self.date_column, date_end))
                 raise Exception(f"Date column {date_start} or {date_end} is not valid")
             dates = pd.date_range(start=date_start, end=date_end, freq=timedelta(hours=1))
             return [self.df_manager.get_cell_by_date(self.date_column, x, "Load (kW)") for x in dates]
