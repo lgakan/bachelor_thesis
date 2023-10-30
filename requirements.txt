@@ -5,3 +5,4 @@ pandas == 2.1.0
 matplotlib == 3.5.3
 suntime
 plotly==5.17.0
+streamlit

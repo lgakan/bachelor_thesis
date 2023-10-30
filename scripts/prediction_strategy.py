@@ -12,7 +12,7 @@ class PredictionStrategy(ABC):
         pass
 
 
-class DayPredictionStrategy(PredictionStrategy):
+class DayFullBankPredictionStrategy(PredictionStrategy):
     def __init__(self, min_energy, max_energy):
         self.min_energy = min_energy
         self.max_energy = max_energy
@@ -57,8 +57,6 @@ class DayPredictionStrategy(PredictionStrategy):
     def get_plan(self, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
         predicted_final_lvl = self.forecast_final_energy_lvl(start_energy, hourly_balances)
         negative_index_list = [idx for idx, value in enumerate(hourly_balances) if value < 0.0]
-        # if predicted_final_lvl >= self.max_energy:
-        #     return [round(x, 2) for x in hourly_balances]
         need = round(self.max_energy - predicted_final_lvl, 2)
         positive_balances = [i for i in hourly_balances if i > 0]
         print(f"predicted_bank_lvl: {predicted_final_lvl}")
@@ -110,7 +108,7 @@ class NightPredictionStrategy(PredictionStrategy):
             else:
                 current_energy_lvl = 0.0
                 inner_balances = hourly_balances[:i + 1]
-                extra = self.forecast_final_energy_lvl(start_energy, inner_balances[:-1]) + inner_balances[-1]  
+                extra = self.forecast_final_energy_lvl(start_energy, inner_balances[:-1]) + inner_balances[-1]
                 idx_order = self.sort_list_idxes_ascending(prices[:i + 1])
                 for idx in idx_order:
                     if idx == len(inner_balances) - 1:
@@ -145,7 +143,7 @@ if __name__ == "__main__":
     print(f"random_prices: {random_prices}")
     print()
     print(f"day_random_hourly_balances: {day_random_hourly_balances}")
-    day_algo = DayPredictionStrategy(my_min_energy, my_max_energy)
+    day_algo = DayFullBankPredictionStrategy(my_min_energy, my_max_energy)
     day_plan = day_algo.get_plan(my_start_energy, random_prices, day_random_hourly_balances)
     print(f"Finished day plan: {day_plan}")
     print(f"Final energy lvl: {day_algo.forecast_final_energy_lvl(my_start_energy, day_plan)}")
