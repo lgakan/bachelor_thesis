@@ -25,7 +25,7 @@ trading platforms._
 
 The general scheme is presented in the diagram below.
 <p align="center">  
-    <img src="lib/images/main.png" alt="The chart`s image of the system flow" width="700" height="900">
+    <img src="lib/images/main_p.png" alt="The chart`s image of the system flow" width="700" height="900">
 </p>
 
 ## Setup
