@@ -45,7 +45,7 @@ Configs are kept in `lib/config.py`. Use this file to set needed information abo
 
 To run the whole system execute:
 
-    python main.py
+    streamlit run app.py
 
 
 
