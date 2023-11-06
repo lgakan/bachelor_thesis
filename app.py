@@ -20,13 +20,13 @@ def interactive_plot(df: pd.DataFrame):
     st.plotly_chart(fig, use_container_width=True)
 
 
-# def plot_total(df_list: List[pd.DataFrame]):
-#     x_value = list(df_list[0].pop("Date"))
-#     y_values = [list(val["Total price [zl]"]) for val in df_list]
-#     columns = ["Date", "Bare", "Pv", "Raw", "Smart"]
-#     chart_data = pd.DataFrame([x_value]+y_values, columns=columns)
-#     print(chart_data)
-#     st.line_chart(chart_data, x="Date", y=columns)
+def plot_total(df_list: List[pd.DataFrame]):
+    x_value = list(df_list[0]["Date"])
+    y_values = [list(val["Total price [zl]"]) for val in df_list]
+    columns = ["Date", "Bare", "Pv", "Raw", "Smart"]
+    chart_data = pd.DataFrame({k: v for k, v in zip(columns, [x_value]+y_values)})
+    print(chart_data)
+    st.line_chart(chart_data, x="Date", y=columns[1:])
 
 
 st.set_page_config(page_title="RES", page_icon=":bar_chart:")
@@ -75,8 +75,12 @@ with st.container():
         for system, tab in zip(systems, tabs):
             with tab:
                 st.write(f"TOTAL: {system.summed_cost:.2}")
-                df_to_plot = system.plot_charts()
+                df_to_plot = system.plotter.df
                 interactive_plot(df_to_plot)
+        with tab5:
+            st.write(f"Summary of total costs")
+            dfs_to_plot = [s.plotter.df for s in systems]
+            plot_total(dfs_to_plot)
     except:
         st.info('Click "Run!" button to run the system!')
         st.stop()
