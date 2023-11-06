@@ -1,6 +1,8 @@
+import copy
 from datetime import datetime
 from datetime import timedelta
 from typing import List
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -20,12 +22,12 @@ def interactive_plot(df: pd.DataFrame):
     st.plotly_chart(fig, use_container_width=True)
 
 
+@st.cache_data
 def plot_total(df_list: List[pd.DataFrame]):
     x_value = list(df_list[0]["Date"])
     y_values = [list(val["Total price [zl]"]) for val in df_list]
     columns = ["Date", "Bare", "Pv", "Raw", "Smart"]
     chart_data = pd.DataFrame({k: v for k, v in zip(columns, [x_value]+y_values)})
-    print(chart_data)
     st.line_chart(chart_data, x="Date", y=columns[1:])
 
 
@@ -75,7 +77,7 @@ with st.container():
         for system, tab in zip(systems, tabs):
             with tab:
                 st.write(f"TOTAL: {system.summed_cost:.2}")
-                df_to_plot = system.plotter.df
+                df_to_plot = copy.deepcopy(system.plotter.df)
                 interactive_plot(df_to_plot)
         with tab5:
             st.write(f"Summary of total costs")

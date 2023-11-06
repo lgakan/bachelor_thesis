@@ -95,14 +95,14 @@ class SmartSystem(SystemBase):
         self._prediction_strategy = strategy
 
     @staticmethod
-    def is_ascending(arr: List[Union[int, float]]):
+    def is_ascending(arr: List[Union[int, float]]) -> bool:
         n = len(arr)
         for i in range(1, n):
             if arr[i - 1] > arr[i]:
                 return False
         return True
 
-    def calculate_cost(self, predicted_balance, current_balance, rce_price):
+    def calculate_cost(self, predicted_balance: float, current_balance: float, rce_price: float) -> float:
         if current_balance >= 0:
             energy_surplus = self.energy_bank.manage_energy(current_balance)
             cost = -energy_surplus * rce_price
@@ -120,35 +120,38 @@ class SmartSystem(SystemBase):
                 cost = -balance_after_bank * rce_price
         return cost
 
-    def feed_consumption(self, date_in: pd.Timestamp) -> None:
+    def create_energy_plan(self, date_in: pd.Timestamp) -> None:
         start = date_in
-        if self.prediction_strategy is None or self.energy_plan is None:
-            sunrise, sunset = self.sun_manager.get_sun_data(date_in)
-            logger.info(f"sunrise: {sunrise} and sunset: {sunset}")
-            if date_in.hour >= sunset:
-                self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
-                end = start.replace(day=date_in.day + 1, hour=sunrise)
-            elif sunrise <= date_in.hour < sunset:
-                self.prediction_strategy = DayFullBankPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
-                end = start.replace(hour=sunset)
-            else:
-                self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
-                end = start.replace(hour=sunrise)
-            logger.info(f"New plan type: {type(self.prediction_strategy)}")
-            rce_prices = self.energy_pricer.get_rce_by_date(start, end)
-            consumptions = self.consumer.get_consumption_by_date(start, end)
-            productions = self.producer.get_production_by_date(start, end)
-            balances = [round(prod - cons, 2) for (prod, cons) in zip(productions, consumptions)]
-            dates = pd.date_range(start=start, end=end, freq=timedelta(hours=1))
-            logger.info(f"Input rce_prices: {rce_prices}")
-            logger.info(f"Input productions: {productions}")
-            logger.info(f"Input consumptions: {consumptions}")
-            logger.info(f"Input balances: {balances}")
-            energy_plan = self.prediction_strategy.get_plan(self.energy_bank.lvl, rce_prices, balances)
-            logger.info(f"energy_plan: {energy_plan}")
-            logger.info("")
-            self.energy_plan = {k: v for k, v in zip(dates, energy_plan)}
+        sunrise, sunset = self.sun_manager.get_sun_data(date_in)
+        logger.info(f"sunrise: {sunrise} and sunset: {sunset}")
+        if date_in.hour >= sunset:
+            self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
+            end = start.replace(day=date_in.day + 1, hour=sunrise)
+        elif sunrise <= date_in.hour < sunset:
+            self.prediction_strategy = DayFullBankPredictionStrategy(self.energy_bank.min_lvl,
+                                                                     self.energy_bank.capacity)
+            end = start.replace(hour=sunset)
+        else:
+            self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
+            end = start.replace(hour=sunrise)
+        logger.info(f"New plan type: {type(self.prediction_strategy)}")
+        rce_prices = self.energy_pricer.get_rce_by_date(start, end)
+        consumptions = self.consumer.get_consumption_by_date(start, end)
+        productions = self.producer.get_production_by_date(start, end)
+        balances = [round(prod - cons, 2) for (prod, cons) in zip(productions, consumptions)]
+        dates = pd.date_range(start=start, end=end, freq=timedelta(hours=1))
+        logger.info(f"Input rce_prices: {rce_prices}")
+        logger.info(f"Input productions: {productions}")
+        logger.info(f"Input consumptions: {consumptions}")
+        logger.info(f"Input balances: {balances}")
+        energy_plan = self.prediction_strategy.get_plan(self.energy_bank.lvl, rce_prices, balances)
+        logger.info(f"energy_plan: {energy_plan}")
+        logger.info("")
+        self.energy_plan = {k: v for k, v in zip(dates, energy_plan)}
 
+    def feed_consumption(self, date_in: pd.Timestamp) -> None:
+        if self.prediction_strategy is None or self.energy_plan is None:
+            self.create_energy_plan(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
