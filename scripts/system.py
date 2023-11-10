@@ -58,10 +58,16 @@ class PvSystem(SystemBase):
 
 
 class RawFullSystem(SystemBase):
-    def __init__(self, energy_bank_capacity: float = 3.0):
+    def __init__(self, eb_capacity: float = 3.0,
+                 eb_min_lvl: float = 0.0,
+                 eb_start_lvl: float = 1.0,
+                 eb_purchase_cost: float = 10000.0,
+                 eb_cycles: int = 5000,
+                 pv_size: int = 3):
         super().__init__()
         self.producer = Pv(date_column="Date")
-        self.energy_bank = EnergyBank(capacity=energy_bank_capacity)
+        self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
+                                      purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         consumption = self.consumer.get_consumption_by_date(date_in)
@@ -78,10 +84,16 @@ class RawFullSystem(SystemBase):
 
 
 class SmartSystem(SystemBase):
-    def __init__(self, energy_bank_capacity: float = 3.0):
+    def __init__(self, eb_capacity: float = 3.0,
+                 eb_min_lvl: float = 0.0,
+                 eb_start_lvl: float = 1.0,
+                 eb_purchase_cost: float = 10000.0,
+                 eb_cycles: int = 5000,
+                 pv_size: int = 3):
         super().__init__()
         self.producer = Pv(date_column="Date")
-        self.energy_bank = EnergyBank(capacity=energy_bank_capacity)
+        self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
+                                      purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
         self.sun_manager = SunManager()
         self._prediction_strategy = None
         self.energy_plan = None
@@ -105,20 +117,20 @@ class SmartSystem(SystemBase):
     def calculate_cost(self, predicted_balance: float, current_balance: float, rce_price: float) -> float:
         if current_balance >= 0:
             energy_surplus = self.energy_bank.manage_energy(current_balance)
-            cost = -energy_surplus * rce_price
+            return - (energy_surplus * rce_price) + self.energy_bank.operation_cost(current_balance - energy_surplus)
         else:
             if predicted_balance > 0.0:
                 raise Exception("Impossible")
             if predicted_balance == 0.0:
-                cost = -current_balance * rce_price
+                return - current_balance * rce_price
             elif 0 > predicted_balance >= current_balance:
                 balance_after_bank = self.energy_bank.manage_energy(predicted_balance)
-                balance_diff = round(current_balance + balance_after_bank, 2)
-                cost = -balance_diff * rce_price
+                balance_diff = round(current_balance - balance_after_bank, 2)
+                return - balance_diff * rce_price - self.energy_bank.operation_cost(predicted_balance)
             elif predicted_balance < 0 and predicted_balance < current_balance:
                 balance_after_bank = self.energy_bank.manage_energy(current_balance)
-                cost = -balance_after_bank * rce_price
-        return cost
+                return - balance_after_bank * rce_price - self.energy_bank.operation_cost(current_balance)
+        raise Exception("The cos value has been calculated incorrectly.")
 
     def create_energy_plan(self, date_in: pd.Timestamp) -> None:
         start = date_in
@@ -155,8 +167,9 @@ class SmartSystem(SystemBase):
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
-        current_balance = round(production - consumption, 2)
-        current_balance = round(current_balance * random.uniform(0.8, 1.2), 2)
+        fake_current_balance = round(production - consumption, 2)
+        random.seed(0)
+        current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         predicted_balance = self.energy_plan[date_in]
         logger.info(f"Current balance: {current_balance}")
         logger.info(f"Predicted balance: {predicted_balance}")
@@ -168,3 +181,63 @@ class SmartSystem(SystemBase):
             self.energy_plan = None
         logger.info(f"After operations bank lvl: {self.energy_bank.lvl}")
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
+
+
+class SmartSaveSystem(SystemBase):
+    def __init__(self, eb_capacity: float = 3.0,
+                 eb_min_lvl: float = 0.0,
+                 eb_start_lvl: float = 1.0,
+                 eb_purchase_cost: float = 10000.0,
+                 eb_cycles: int = 5000,
+                 pv_size: int = 3):
+        super().__init__()
+        self.producer = Pv(date_column="Date")
+        self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
+                                      purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
+        self.sun_manager = SunManager()
+        self.average_energy_cost = None
+
+    def calculate_average_energy_cost(self, start: pd.Timestamp, end: pd.Timestamp) -> None:
+        rce_prices = self.energy_pricer.get_rce_by_date(start, end)
+        self.average_energy_cost = sum(rce_prices) / len(rce_prices)
+
+    def calculate_cost(self, balance: float, price: float) -> float:
+        bank_operation_cost = self.energy_bank.operation_cost(balance)
+        if balance >= 0.0:
+            if price + bank_operation_cost >= self.average_energy_cost:
+                cost = - balance * price
+            else:
+                rest_energy = self.energy_bank.manage_energy(balance)
+                cost = - (rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy))
+        else:
+            if price + bank_operation_cost >= self.average_energy_cost:
+                rest_energy = self.energy_bank.manage_energy(balance)
+                cost = rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
+            else:
+                cost = balance * price
+        return cost
+
+    def feed_consumption(self, date_in: pd.Timestamp) -> None:
+        sunrise, sunset = self.sun_manager.get_sun_data(date_in)
+        logger.info(f"sunrise: {sunrise} and sunset: {sunset}")
+        if date_in.hour == sunset or date_in.hour == sunrise or self.average_energy_cost is None:
+            if date_in.hour >= sunset:
+                end = date_in.replace(day=date_in.day + 1, hour=sunrise)
+            elif sunrise <= date_in.hour < sunset:
+                end = date_in.replace(hour=sunset)
+            else:
+                end = date_in.replace(hour=sunrise)
+            self.calculate_average_energy_cost(date_in, end)
+        rce_price = self.energy_pricer.get_rce_by_date(date_in)
+        consumption = self.consumer.get_consumption_by_date(date_in)
+        production = self.producer.get_production_by_date(date_in)
+        fake_current_balance = round(production - consumption, 2)
+        random.seed(0)
+        current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
+        logger.info(f"Current balance: {current_balance}")
+        logger.info(f"Current bank lvl: {self.energy_bank.lvl}")
+        cost = self.calculate_cost(current_balance, rce_price)
+        self.summed_cost += round(cost / 1000, 2)
+        logger.info(f"After operations bank lvl: {self.energy_bank.lvl}")
+        self.plotter.add_data_row(
+            [date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])

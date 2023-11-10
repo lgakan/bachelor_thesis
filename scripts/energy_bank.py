@@ -5,18 +5,19 @@ class EnergyBank:
     Attributes:
         capacity (float): Energy bank capacity expressed in kWh.
         lvl (float): Current energy bank level expressed in kWh.
-        efficiency (int): The efficiency of energy bank expressed in percentages.
     """
-
     def __init__(self,
                  capacity: float = 3.0,
                  min_lvl: float = 0.0,
                  lvl: float = 1.0,
-                 efficiency: int = 100):     # TODO: Not implemented!
+                 purchase_cost: float = 500.0,
+                 cycles_num: int = 5000):
         self.capacity = capacity
         self.min_lvl = min_lvl
         self._lvl = lvl
-        self.efficiency = efficiency
+        self.purchase_cost = purchase_cost
+        self.cycles_num = cycles_num
+        self._start_cycles_num = cycles_num
 
     @property
     def lvl(self):
@@ -53,3 +54,7 @@ class EnergyBank:
             rest_energy = request_energy + self._lvl
             self._lvl = 0.0
             return rest_energy
+
+    def operation_cost(self, input_balance: float) -> float:
+        single_cycle_cost = self.purchase_cost / self._start_cycles_num
+        return abs(input_balance) / 2 * single_cycle_cost
