@@ -125,11 +125,13 @@ class SmartSystem(SystemBase):
                 return - current_balance * rce_price
             elif 0 > predicted_balance >= current_balance:
                 balance_after_bank = self.energy_bank.manage_energy(predicted_balance)
-                balance_diff = round(current_balance - balance_after_bank, 2)
-                return - balance_diff * rce_price - self.energy_bank.operation_cost(predicted_balance)
+                energy_sent = predicted_balance - balance_after_bank
+                balance_diff = round(current_balance - energy_sent, 2)
+                return - balance_diff * rce_price + self.energy_bank.operation_cost(energy_sent)
             elif predicted_balance < 0 and predicted_balance < current_balance:
                 balance_after_bank = self.energy_bank.manage_energy(current_balance)
-                return - balance_after_bank * rce_price - self.energy_bank.operation_cost(current_balance)
+                energy_sent = current_balance - balance_after_bank
+                return - balance_after_bank * rce_price + self.energy_bank.operation_cost(energy_sent)
         raise Exception("The cos value has been calculated incorrectly.")
 
     def create_energy_plan(self, date_in: pd.Timestamp) -> None:
@@ -203,18 +205,27 @@ class SmartSaveSystem(SystemBase):
 
     def calculate_cost(self, balance: float, price: float) -> float:
         bank_operation_cost = self.energy_bank.operation_cost(balance)
-        if balance >= 0.0:
-            if price + bank_operation_cost >= self.average_energy_cost:
-                cost = - balance * price
+        if price >= 0.0:
+            if balance >= 0.0:
+                if price + bank_operation_cost >= self.average_energy_cost:
+                    cost = - balance * price
+                else:
+                    rest_energy = self.energy_bank.manage_energy(balance)
+                    cost = - rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
             else:
-                rest_energy = self.energy_bank.manage_energy(balance)
-                cost = - (rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy))
+                if price + bank_operation_cost >= self.average_energy_cost:
+                    rest_energy = self.energy_bank.manage_energy(balance)
+                    cost = rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
+                else:
+                    cost = balance * price
         else:
-            if price + bank_operation_cost >= self.average_energy_cost:
+            if balance >= 0.0:
                 rest_energy = self.energy_bank.manage_energy(balance)
-                cost = rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
+                cost = - rest_energy * price + self.energy_bank.operation_cost(balance - rest_energy)
             else:
-                cost = balance * price
+                charged_energy = self.energy_bank.capacity - self.energy_bank.lvl
+                self.energy_bank.manage_energy(charged_energy)
+                cost = - price * charged_energy + self.energy_bank.operation_cost(charged_energy)
         return cost
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
