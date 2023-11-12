@@ -1,11 +1,11 @@
 import pandas as pd
 from suntime import Sun
 
+from lib.config import Config
 
-# AGH:  latitude: float = 50.07, longitude: float = 19.92
 
 class SunManager:
-    def __init__(self, latitude: float = 50.07, longitude: float = 19.92):
+    def __init__(self, latitude: float = Config.LATITUDE, longitude: float = Config.LONGITUDE):
         self.latitude = latitude
         self.longitude = longitude
 

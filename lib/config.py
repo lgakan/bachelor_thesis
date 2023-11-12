@@ -8,20 +8,25 @@ class CustomEnum(Enum):
 
 
 class Config(CustomEnum):
-    # local_links
+    # The data to fill in
+    LATITUDE = 50.07
+    LONGITUDE = 19.92
+    PV_TOKEN = "<PV_TOKEN>"
+
+    # local paths
     LOG_FILE_PATH = "lib/program_log.log"
-    DATA_ENERGY_PRODUCTION = "lib/data/energy_production2.csv"
-    DATA_ENERGY_USAGE = "lib/data/energy_production2.csv"
     DATA_PRICES = "lib/data/prices.csv"
-    PATH_DOWNLOAD_DIR = "C:/Users/Pawel/Downloads/PL_CENY_RYN_EN_20230830_20230829144234.csv"
+    DATA_ENERGY_PRODUCTION = "lib/data/energy_production.csv"
+    DATA_ENERGY_CONSUMPTION = "lib/data/energy_consumption2.csv"
 
     # http_links
-    CSV_DOWNLOAD = f"https://www.pse.pl/getcsv/-/export/csv/PL_CENY_RYN_EN/"
+    PV_API_LINK = "https://www.renewables.ninja/api/"
+    CSV_DOWNLOAD_LINK = f"https://www.pse.pl/getcsv/-/export/csv/PL_CENY_RYN_EN/"
 
 
 class PhotovoltaicDirection(CustomEnum):
     SOUTH = "south"
-    EAST_WEST = "east_west"
+    EAST = "east"
 
 
 class DataTypes(CustomEnum):

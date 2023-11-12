@@ -25,7 +25,7 @@ trading platforms._
 
 The general scheme is presented in the diagram below.
 <p align="center">  
-    <img src="lib/images/main_p.png" alt="The chart`s image of the system flow" width="700" height="900">
+    <img src="lib/images/main_2.png" alt="The chart`s image of the system flow" width="700" height="900">
 </p>
 
 ## Setup
@@ -36,17 +36,20 @@ Run `.sh` script to install all required python packages and setup environment:
     chmod +x setup.sh
     sh setup.sh
 
+Fill in the data in file `lib/config.py`
 ## Config and logs files
 
-Logs are kept in `logs/`\
-Configs are kept in `lib/config.py`. Use this file to set needed information about files.
+Logs are kept in `logs/`
+
+Configs are kept in `lib/config.py`. Use this file to set needed values.\
+The `PV_TOKEN` is available at [Renewables.ninja](https://www.renewables.ninja/profile)
 
 ## Run system
 
-To run the whole system execute:
+To run system's gui execute:
 
     streamlit run app.py
 
+To run system's code execute:
 
-
-
+    python main.py

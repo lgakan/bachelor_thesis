@@ -11,16 +11,16 @@ from scripts.energy_bank import EnergyBank
 from scripts.energy_pricing import EnergyWebScraper
 from scripts.load import Load
 from scripts.plotter import Plotter
-from scripts.prediction_strategy import PredictionStrategy, DayFullBankPredictionStrategy, NightPredictionStrategy
+from scripts.prediction_strategy import PredictionStrategy, DayPredictionStrategy, NightPredictionStrategy
 from scripts.pv import Pv
 
 
 class SystemBase:
-    def __init__(self):
+    def __init__(self, load_multiplier: Union[None, int] = None):
         self.summed_cost = 0
         self.energy_pricer = EnergyWebScraper(date_column="Date")
         self.plotter = Plotter(["price [zl]", "consumption [kWh]", "production [kWh]", "energy_bank [kWh]", "Total price [zl]"])
-        self.consumer = Load(date_column="Date")
+        self.consumer = Load(date_column="Date", multiplier=load_multiplier)
 
     @abstractmethod
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
@@ -31,8 +31,8 @@ class SystemBase:
 
 
 class BareSystem(SystemBase):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, load_multiplier: Union[None, int] = None):
+        super().__init__(load_multiplier=load_multiplier)
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         consumption = self.consumer.get_consumption_by_date(date_in)
@@ -43,16 +43,21 @@ class BareSystem(SystemBase):
 
 
 class PvSystem(SystemBase):
-    def __init__(self):
-        super().__init__()
-        self.producer = Pv(date_column="Date")
+    def __init__(self, pv_size: int = 5, load_multiplier: Union[None, int] = None):
+        super().__init__(load_multiplier=load_multiplier)
+        self.producer = Pv(date_column="Date", size=pv_size)
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         consumption = self.consumer.get_consumption_by_date(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         pv_prod = self.producer.get_production_by_date(date_in)
-        reduced_consumption_by_pv = consumption - pv_prod
-        cost = reduced_consumption_by_pv * rce_price
+        reduced_consumption = consumption - pv_prod
+        if rce_price >= 0.0:
+            cost = reduced_consumption * rce_price
+        else:
+            cost = reduced_consumption * rce_price
+            if reduced_consumption >= 0.0:
+                cost = cost * -1
         self.summed_cost += cost / 1000
         self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, 0, self.summed_cost])
 
@@ -63,22 +68,36 @@ class RawFullSystem(SystemBase):
                  eb_start_lvl: float = 1.0,
                  eb_purchase_cost: float = 10000.0,
                  eb_cycles: int = 5000,
-                 pv_size: int = 3):
-        super().__init__()
-        self.producer = Pv(date_column="Date")
+                 pv_size: int = 5,
+                 load_multiplier: Union[None, int] = None):
+        super().__init__(load_multiplier=load_multiplier)
+        self.producer = Pv(date_column="Date", size=pv_size)
         self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
                                       purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
+
+    def calculate_cost(self, balance: float, price: float) -> float:
+        balance_after_bank = self.energy_bank.manage_energy(balance)
+        if price >= 0.0:
+            if balance >= 0:
+                cost = - balance_after_bank * price + self.energy_bank.operation_cost(balance - balance_after_bank)
+            else:
+                cost = - balance_after_bank * price + self.energy_bank.operation_cost(balance + balance_after_bank)
+        else:
+            if balance >= 0.0:
+                rest_energy = self.energy_bank.manage_energy(balance)
+                cost = - rest_energy * price + self.energy_bank.operation_cost(balance - rest_energy)
+            else:
+                charged_energy = self.energy_bank.capacity - self.energy_bank.lvl
+                self.energy_bank.manage_energy(charged_energy)
+                cost = - price * charged_energy + self.energy_bank.operation_cost(charged_energy)
+        return cost
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         consumption = self.consumer.get_consumption_by_date(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         pv_prod = self.producer.get_production_by_date(date_in)
         balance = pv_prod - consumption
-        balance_after_bank = self.energy_bank.manage_energy(balance)
-        if balance_after_bank > 0:
-            cost = -balance_after_bank * rce_price
-        else:
-            cost = -balance_after_bank * rce_price
+        cost = self.calculate_cost(balance, rce_price)
         self.summed_cost += cost / 1000
         self.plotter.add_data_row([date_in, rce_price, consumption, pv_prod, self.energy_bank.lvl, self.summed_cost])
 
@@ -89,9 +108,10 @@ class SmartSystem(SystemBase):
                  eb_start_lvl: float = 1.0,
                  eb_purchase_cost: float = 10000.0,
                  eb_cycles: int = 5000,
-                 pv_size: int = 3):
-        super().__init__()
-        self.producer = Pv(date_column="Date")
+                 pv_size: int = 5,
+                 load_multiplier: Union[None, int] = None):
+        super().__init__(load_multiplier=load_multiplier)
+        self.producer = Pv(date_column="Date", size=pv_size)
         self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
                                       purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
         self.sun_manager = SunManager()
@@ -142,8 +162,7 @@ class SmartSystem(SystemBase):
             self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
             end = start.replace(day=date_in.day + 1, hour=sunrise)
         elif sunrise <= date_in.hour < sunset:
-            self.prediction_strategy = DayFullBankPredictionStrategy(self.energy_bank.min_lvl,
-                                                                     self.energy_bank.capacity)
+            self.prediction_strategy = DayPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
             end = start.replace(hour=sunset)
         else:
             self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
@@ -191,9 +210,10 @@ class SmartSaveSystem(SystemBase):
                  eb_start_lvl: float = 1.0,
                  eb_purchase_cost: float = 10000.0,
                  eb_cycles: int = 5000,
-                 pv_size: int = 3):
-        super().__init__()
-        self.producer = Pv(date_column="Date")
+                 pv_size: int = 5,
+                 load_multiplier: Union[None, int] = None):
+        super().__init__(load_multiplier=load_multiplier)
+        self.producer = Pv(date_column="Date", size=pv_size)
         self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
                                       purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
         self.sun_manager = SunManager()
