@@ -11,7 +11,6 @@ class Config(CustomEnum):
     # The data to fill in
     LATITUDE = 50.07
     LONGITUDE = 19.92
-    PV_TOKEN = "<PV_TOKEN>"
 
     # local paths
     LOG_FILE_PATH = "lib/program_log.log"

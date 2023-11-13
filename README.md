@@ -41,8 +41,7 @@ Fill in the data in file `lib/config.py`
 
 Logs are kept in `logs/`
 
-Configs are kept in `lib/config.py`. Use this file to set needed values.\
-The `PV_TOKEN` is available at [Renewables.ninja](https://www.renewables.ninja/profile)
+Configs are kept in `lib/config.py`. Use this file to set needed values.
 
 ## Run system
 

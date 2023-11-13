@@ -54,13 +54,12 @@ class Pv:
 
     def update_pv_file(self):
         s = requests.Session()
-        s.headers = {"Authorization": "Token " + Config.PV_TOKEN}
         url = Config.PV_API_LINK + "data/pv"
         args = {
             'lat': Config.LATITUDE,
             'lon': Config.LONGITUDE,
-            'date_from': '2015-01-01',
-            'date_to': '2015-12-31',
+            'date_from': '2019-01-01',
+            'date_to': '2019-12-31',
             'dataset': 'merra2',
             'capacity': self.size,
             'system_loss': 0.1,

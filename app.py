@@ -100,7 +100,7 @@ with st.container():
         tabs = [tab1, tab2, tab3, tab4, tab5]
         for system, tab in zip(systems, tabs):
             with tab:
-                st.write(f"Energy cost: {system.summed_cost:.2}")
+                st.write(f"Energy cost: {round(system.summed_cost, 2)}")
                 if system in [raw_full_system, smart_system, smart_save_system]:
                     st.write(f"Bank value: {system.energy_bank.lvl * system.energy_pricer.get_rce_by_date(date_end)/1000:.2}")
                 df_to_plot = copy.deepcopy(system.plotter.df)
