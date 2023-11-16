@@ -13,8 +13,10 @@ def sort_list_idxes_ascending(list_in: List[float]) -> List[int]:
     return np.argsort(list_in)[:].tolist()
 
 
-def simulate_eb_operation(eb: EnergyBank, balance_in: Union[float, List[float]]) -> float:
+def simulate_eb_operation(eb: EnergyBank, balance_in: Union[float, List[float]], start_lvl: Union[None, float]) -> float:
     fake_eb = copy.deepcopy(eb)
+    if start_lvl is not None:
+        fake_eb.lvl = start_lvl
     if isinstance(balance_in, float):
         fake_eb.manage_energy(balance_in)
     elif isinstance(balance_in, list):
@@ -44,20 +46,21 @@ class PredictionStrategy(ABC):
 
 class DayPredictionStrategy(PredictionStrategy):
     def __init__(self, min_energy, max_energy):
-        self.energy_bank = EnergyBank(capacity=max_energy, min_lvl=min_energy)
+        self.min_energy = min_energy
+        self.max_energy = max_energy
 
-    def _optimize_balance(self, energy_lvl: float, need: float, balances: List[float]) -> (List[float], float):
+    def _optimize_balances(self, eb: EnergyBank, need: float, balances: List[float]) -> (List[float], float):
         positive_balances = [i for i in balances if i > 0]
-        if energy_lvl + sum(positive_balances) <= self.max_energy:
+        if eb.lvl + sum(positive_balances) <= self.max_energy:
             for i in range(len(balances)):
                 if balances[i] < 0.0:
                     need -= abs(balances[i])
                     balances[i] = 0.0
             return balances, need
-        predicted_en = forecast_final_energy_lvl(self.min_energy, self.max_energy, energy_lvl, balances)
-        new_predicted_en = forecast_final_energy_lvl(self.min_energy, self.max_energy, energy_lvl, balances[1:])
+        predicted_en = simulate_eb_operation(eb, balances)
+        new_predicted_en = simulate_eb_operation(eb, balances[1:])
         if new_predicted_en == predicted_en:
-            if energy_lvl + balances[0] < 0:
+            if eb.lvl + balances[0] < 0:
                 balances[0] = 0.0
             return balances, need
         current_need = abs(balances[0])
@@ -77,55 +80,65 @@ class DayPredictionStrategy(PredictionStrategy):
                 balances[idx-1] = new_balance
         return balances
 
-    def get_plan(self, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
-        if any([price < 0.0 for price in prices]):
-            balances_groups = negative_prices_process(prices, hourly_balances)
-            for idx_list in range(len(balances_groups)):
-                group_start_idx = len([element for sublist in balances_groups[:idx_list] for element in sublist])
-                group_last_idx = group_start_idx + len(balances_groups[idx_list])
-                group_first_price = prices[group_start_idx]
-                if group_first_price > 0:
-                    predicted_final_lvl = forecast_final_energy_lvl(self.min_energy, self.max_energy, start_energy, balances_groups[idx_list])
-                    negative_index_list = [idx for idx, value in enumerate(balances_groups[idx_list]) if value < 0.0]
-                    need = round(self.max_energy - predicted_final_lvl, 2)
-                    positive_balances = [i for i in balances_groups[idx_list] if i > 0]
-                    if start_energy + sum(positive_balances) > self.max_energy:
-                        idx_order = sort_list_idxes_ascending(prices[group_start_idx:group_last_idx])
-                        for idx in idx_order:
-                            if idx in negative_index_list:
-                                current_energy_lvl = forecast_final_energy_lvl(self.min_energy, self.max_energy, start_energy, hourly_balances[group_start_idx:group_start_idx+idx])
-                                hourly_balances[group_start_idx+idx: len(balances_groups[idx_list])], need = self._optimize_balance(current_energy_lvl, need, hourly_balances[group_start_idx+idx: len(balances_groups[idx_list])])
-                                if need <= 0.0:
-                                    break
-                    else:
-                        positive_hourly_balances = [0 if i < 0 else i for i in hourly_balances[group_start_idx: len(balances_groups[idx_list])]]
-                        hourly_balances[group_start_idx: len(balances_groups[idx_list])] = positive_hourly_balances
-                else:
-                    for idx in range(1, len(balances_groups[idx_list])):
-                        current_energy_lvl = forecast_final_energy_lvl(self.min_energy, self.max_energy, start_energy, hourly_balances[group_start_idx:group_start_idx + idx])
-                        if current_energy_lvl + hourly_balances[group_start_idx + idx] > self.max_energy:
-                            idx_order = sort_list_idxes_ascending(prices[group_start_idx: group_start_idx + idx])
-                            hourly_balances[group_start_idx: group_start_idx + idx] = self._optimize_positive_balances(start_energy, hourly_balances[group_start_idx: group_start_idx + idx], idx_order, prices[group_start_idx: group_start_idx + idx])
-                        elif hourly_balances[group_start_idx + idx] < 0.0:
-                            hourly_balances[group_start_idx + idx] = 0.0
-                        else:
-                            current_energy_lvl += hourly_balances[group_start_idx + idx]
-        else:
-            predicted_final_lvl = forecast_final_energy_lvl(self.min_energy, self.max_energy, start_energy, hourly_balances)
-            negative_index_list = [idx for idx, value in enumerate(hourly_balances) if value < 0.0]
-            need = round(self.max_energy - predicted_final_lvl, 2)
-            positive_balances = [i for i in hourly_balances if i > 0]
-            if start_energy + sum(positive_balances) > self.max_energy:
-                idx_order = sort_list_idxes_ascending(prices)
-                for idx in idx_order:
-                    if idx in negative_index_list:
-                        new_start_energy = forecast_final_energy_lvl(self.min_energy, self.max_energy, start_energy, hourly_balances[:idx])
-                        hourly_balances[idx:], need = self._optimize_balance(new_start_energy, need, hourly_balances[idx:])
-                        if need <= 0.0:
-                            break
+    def mixed_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]):
+        balances_groups = separate_negative_prices(prices, hourly_balances)
+        for idx_list in range(len(balances_groups)):
+            idx_group_start = len([element for sublist in balances_groups[:idx_list] for element in sublist])
+            idx_group_end = idx_group_start + len(balances_groups[idx_list])
+            group_first_price = prices[idx_group_start]
+            if group_first_price > 0:
+                self.positive_prices_handler(eb, start_energy, prices[idx_group_start:idx_group_end], hourly_balances[idx_group_start:idx_group_end])
+                # predicted_final_lvl = simulate_eb_operation(eb, balances_groups[idx_list], start_energy)
+                # negative_index_list = [idx for idx, value in enumerate(balances_groups[idx_list]) if value < 0.0]
+                # need = round(self.max_energy - predicted_final_lvl, 2)
+                # positive_balances = [i for i in balances_groups[idx_list] if i > 0]
+                # is_full_eb_possible = eb.lvl + sum(positive_balances) > self.max_energy
+                # if is_full_eb_possible:
+                #     idx_order = sort_list_idxes_ascending(prices[idx_group_start:idx_group_end])
+                #     for idx in idx_order:
+                #         if idx in negative_index_list:
+                #             eb.lvl = simulate_eb_operation(eb, hourly_balances[idx_group_start:idx_group_end+idx], start_energy)
+                #             hourly_balances[idx_group_start+idx:idx_group_end], need = self._optimize_balances(eb, need, hourly_balances[idx_group_start+idx:idx_group_end])
             else:
-                positive_hourly_balances = [0 if i < 0 else i for i in hourly_balances]
-                return positive_hourly_balances
+                for idx in range(1, len(balances_groups[idx_list])):
+                    eb.lvl = simulate_eb_operation(eb, hourly_balances[idx_group_start:idx_group_end + idx], start_energy)
+                    is_full_eb_possible = eb.lvl + hourly_balances[idx_group_start + idx] > self.max_energy
+                    if is_full_eb_possible:
+                        idx_order = sort_list_idxes_ascending(prices[idx_group_start: idx_group_end + idx])
+                        balances_to_optimize = hourly_balances[idx_group_start:idx_group_end + idx]
+                        prices_to_optimize = prices[idx_group_start: idx_group_end + idx]
+                        balances_to_optimize = self._optimize_positive_balances(eb, balances_to_optimize, idx_order, prices_to_optimize)
+                    elif hourly_balances[idx_group_start + idx] < 0.0:
+                        hourly_balances[idx_group_start + idx] = 0.0
+                    else:
+                        eb.lvl += hourly_balances[idx_group_start + idx] # TODO
+
+    def positive_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]):
+        predicted_final_lvl = simulate_eb_operation(eb, hourly_balances)
+        negative_index_list = [idx for idx, value in enumerate(hourly_balances) if value < 0.0]
+        need = round(self.max_energy - predicted_final_lvl, 2)
+        positive_balances = [i for i in hourly_balances if i > 0]
+        is_full_eb_possible = eb.lvl + sum(positive_balances) > self.max_energy
+        if is_full_eb_possible:
+            idx_order = sort_list_idxes_ascending(prices)
+            for idx in idx_order:
+                if idx in negative_index_list:
+                    eb.lvl = simulate_eb_operation(eb, hourly_balances[:idx], start_energy)
+                    hourly_balances[idx:], need = self._optimize_balances(eb, need, hourly_balances[idx:])
+                    if need <= 0.0:
+                        break
+                    pass
+        else:
+            positive_hourly_balances = [0 if i < 0 else i for i in hourly_balances]
+            return positive_hourly_balances
+        return hourly_balances
+
+    def get_plan(self, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
+        eb = EnergyBank(min_lvl=self.min_energy, capacity=self.max_energy, lvl=start_energy)
+        if any([price < 0.0 for price in prices]):
+            hourly_balances = self.mixed_prices_handler(eb, prices, hourly_balances)
+        else:
+            hourly_balances = self.positive_prices_handler(eb, start_energy, prices, hourly_balances)
         return [round(x, 2) for x in hourly_balances]
 
 
@@ -150,10 +163,10 @@ class NightPredictionStrategy(PredictionStrategy):
         return [round(x, 2) for x in hourly_balances_in]
 
     def mixed_prices_handler(self, eb: EnergyBank, prices: List[float], hourly_balances: List[float]):
-        balance_groups = separate_negative_prices(prices, hourly_balances)
-        for idx_list in range(len(balance_groups)):
-            idx_group_start = len([element for sublist in balance_groups[:idx_list] for element in sublist])
-            idx_group_end = idx_group_start + len(balance_groups[idx_list])
+        balances_groups = separate_negative_prices(prices, hourly_balances)
+        for idx_list in range(len(balances_groups)):
+            idx_group_start = len([element for sublist in balances_groups[:idx_list] for element in sublist])
+            idx_group_end = idx_group_start + len(balances_groups[idx_list])
             group_first_price = prices[idx_group_start]
             if group_first_price > 0:
                 group_prices = prices[idx_group_start:idx_group_end]
@@ -161,7 +174,7 @@ class NightPredictionStrategy(PredictionStrategy):
                 self.positive_prices_handler(eb, group_prices, group_balances)
             else:
                 eb.lvl = eb.capacity
-                idle_length = len(balance_groups[idx_list])
+                idle_length = len(balances_groups[idx_list])
                 idx_group_end = idx_group_start + idle_length
                 idle_hours = [0] * idle_length
                 hourly_balances[idx_group_start: idx_group_end] = idle_hours
