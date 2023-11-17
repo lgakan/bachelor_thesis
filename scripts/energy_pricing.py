@@ -34,7 +34,7 @@ class EnergyWebScraper:
             prices[start_idx:start_idx + negative_amount] = [-x for x in prices[start_idx:start_idx + negative_amount]]
         return prices
 
-    def get_prices_file_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None, simulate_negative: bool = True) -> None:
+    def get_prices_file_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None, simulate_negative: bool = False) -> None:
         df = self.download_prices_by_date(date_start, date_end)
         df[self.date_column] = df["Data"].astype(str) + df["Godzina"].apply(lambda x: x - 1).astype(str) + "00"
         df[self.date_column] = pd.to_datetime(df["Date"], format="%Y%m%d%H%M%S")
