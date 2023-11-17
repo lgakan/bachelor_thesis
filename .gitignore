@@ -134,3 +134,4 @@ logs/*.log
 lib/trash/
 lib/data/ideas
 lib/data/prices.csv
+lib/data/energy_production.csv

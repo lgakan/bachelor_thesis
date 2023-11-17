@@ -7,8 +7,8 @@ from scripts.system import BareSystem, PvSystem, RawFullSystem, SmartSystem, Sma
 
 
 def main():
-    date_start = pd.to_datetime("05.09.2020 06:00:00", format="%d.%m.%Y %H:%M:%S")
-    date_stop = pd.to_datetime("05.09.2020 14:00:00", format="%d.%m.%Y %H:%M:%S")
+    date_start = pd.to_datetime("19.08.2020 06:00:00", format="%d.%m.%Y %H:%M:%S")
+    date_stop = pd.to_datetime("22.08.2020 14:00:00", format="%d.%m.%Y %H:%M:%S")
     bare_system = BareSystem()
     pv_system = PvSystem()
     raw_full_system = RawFullSystem()

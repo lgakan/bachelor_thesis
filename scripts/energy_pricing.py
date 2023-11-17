@@ -22,18 +22,26 @@ class EnergyWebScraper:
     @staticmethod
     def download_prices_by_date(date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> pd.DataFrame:
         if date_end is None or date_start.strftime('%Y%m%d') == date_end.strftime('%Y%m%d'):
-            url = Config.CSV_DOWNLOAD + "data/" + date_start.strftime('%Y%m%d')
+            url = Config.CSV_DOWNLOAD_LINK + "data/" + date_start.strftime('%Y%m%d')
         else:
-            url = Config.CSV_DOWNLOAD + "data_od/" + date_start.strftime("%Y%m%d") + "/data_do/" + date_end.strftime("%Y%m%d")
+            url = Config.CSV_DOWNLOAD_LINK + "data_od/" + date_start.strftime("%Y%m%d") + "/data_do/" + date_end.strftime("%Y%m%d")
         response = requests.get(url)
         return pd.read_csv(StringIO(response.content.decode('utf-8')), sep=';', decimal=',')
 
-    def get_prices_file_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> None:
+    @staticmethod
+    def simulate_negative_prices(prices: List[float], start_idx: int = 20, negative_amount: int = 7) -> List[float]:
+        if start_idx + negative_amount < len(prices):
+            prices[start_idx:start_idx + negative_amount] = [-x for x in prices[start_idx:start_idx + negative_amount]]
+        return prices
+
+    def get_prices_file_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None, simulate_negative: bool = False) -> None:
         df = self.download_prices_by_date(date_start, date_end)
         df[self.date_column] = df["Data"].astype(str) + df["Godzina"].apply(lambda x: x - 1).astype(str) + "00"
         df[self.date_column] = pd.to_datetime(df["Date"], format="%Y%m%d%H%M%S")
         df[self.date_column] = df[self.date_column].dt.strftime('%d.%m.%Y %H:%M:%S')
         df.drop(["Data", "Godzina"], axis=1, inplace=True)
+        if simulate_negative:
+            df.update({"RCE": self.simulate_negative_prices(df["RCE"].tolist())})
         self.df_manager.save_to_file(df)
 
     def get_rce_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None) -> Union[List[float], float]:
