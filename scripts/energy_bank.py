@@ -59,7 +59,7 @@ class EnergyBank:
             return rest_energy
 
     def operation_cost(self, input_balance: float) -> float:
-        if self.purchase_cost < 0.0 or self.cycles_num < 0:
-            raise Exception(f"Purchase cost: {self.purchase_cost} and cycles: {self.cycles_num} must be greater than 0")
+        if self.purchase_cost < 0.0 or self._start_cycles_num < 0:
+            raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self._start_cycles_num} must be greater than 0")
         single_cycle_cost = self.purchase_cost / self._start_cycles_num
         return round(abs(input_balance) / 2 * single_cycle_cost, 2)
