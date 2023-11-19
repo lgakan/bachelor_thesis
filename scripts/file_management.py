@@ -33,6 +33,8 @@ class DfManager:
 
     def update_columns_names(self, cols_names: Dict[str, str]) -> None:
         df = self.get_from_file()
+        if any([x == self.date_col for x in cols_names.keys()]):
+            self.date_col = cols_names[self.date_col]
         df.rename(columns=cols_names, inplace=True)
         self.save_to_file(df)
 

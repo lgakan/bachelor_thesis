@@ -78,7 +78,7 @@ class TestEnergyWebScaper:
         date_s, date_e = pd.to_datetime(date_start, format="%d.%m.%Y %H:%M:%S"), pd.to_datetime(date_end, format="%d.%m.%Y %H:%M:%S")
         list_rce = web_scraper.get_rce_by_date(date_s, date_e)
         assert list_rce == expected_list_rce
-    #
+
     @pytest.mark.parametrize("date_in, answer", [("10.01.2023 01:00:00", True),
                                                  ((pd.Timestamp.now() + pd.Timedelta(days=2)).strftime("%d.%m.%Y %H:%M:%S"), False)])
     def test_check_next_day_availability(self, date_in: str, answer: bool, web_scraper: EnergyWebScraper) -> None:
