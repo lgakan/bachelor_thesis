@@ -7,7 +7,6 @@ import requests
 import os
 from lib.config import Config
 from scripts.file_management import DfManager
-from lib.logger import logger
 
 
 class EnergyWebScraper:
@@ -37,7 +36,7 @@ class EnergyWebScraper:
     def get_prices_file_by_date(self, date_start: pd.Timestamp, date_end: Union[pd.Timestamp, None] = None, simulate_negative: bool = False) -> None:
         df = self.download_prices_by_date(date_start, date_end)
         df[self.date_column] = df["Data"].astype(str) + df["Godzina"].apply(lambda x: x - 1).astype(str) + "00"
-        df[self.date_column] = pd.to_datetime(df["Date"], format="%Y%m%d%H%M%S")
+        df[self.date_column] = pd.to_datetime(df[self.date_column], format="%Y%m%d%H%M%S")
         df[self.date_column] = df[self.date_column].dt.strftime('%d.%m.%Y %H:%M:%S')
         df.drop(["Data", "Godzina"], axis=1, inplace=True)
         if simulate_negative:
@@ -61,7 +60,7 @@ class EnergyWebScraper:
         try:
             self.download_prices_by_date(date_in)
         except pd.errors.ParserError as e:
-            logger.fatal(e)
+            print(e)
             return False
         else:
             return True
