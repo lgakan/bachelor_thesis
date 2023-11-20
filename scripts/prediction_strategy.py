@@ -48,7 +48,7 @@ class DayPredictionStrategy(PredictionStrategy):
         self.min_energy = min_energy
         self.max_energy = max_energy
 
-    def _optimize_balances(self, eb: EnergyBank, need: float, balances: List[float]) -> (List[float], float):
+    def optimize_mixed_balances(self, eb: EnergyBank, need: float, balances: List[float]) -> (List[float], float):
         positive_balances = [i for i in balances if i > 0]
         if eb.lvl + sum(positive_balances) <= self.max_energy:
             for i in range(len(balances)):
@@ -68,7 +68,11 @@ class DayPredictionStrategy(PredictionStrategy):
         balances[0] += current_need
         return balances, need - current_need
 
-    def _optimize_positive_balances(self, eb: EnergyBank, start_energy: float, balances: List[float], prices_order: List[int], prices: List[float]) -> List[float]:
+    def optimize_positive_balances(self, eb: EnergyBank, start_energy: float, balances: List[float], prices: List[float]) -> List[float]:
+        if any([balance < 0 for balance in balances]):
+            raise Exception("All balances must be >= 0")
+
+        prices_order = sort_list_idxes_ascending(prices)
         if prices_order[-1] == len(balances) - 1:
             return balances
         for idx in range(len(balances)-1, 0, -1):
@@ -94,19 +98,23 @@ class DayPredictionStrategy(PredictionStrategy):
         return hourly_balances
 
     def negative_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
-        balances_length = len(hourly_balances)
+        prices_length, balances_length = len(prices), len(hourly_balances)
+        if prices_length != balances_length:
+            raise Exception(f"prices and balances lengths must be equals: {prices_length} != {balances_length}")
+        elif any([price > 0 for price in prices]):
+            raise Exception("All prices must be <= 0")
+
         if balances_length == 1:
             hourly_balances[0] = 0.0
             eb.lvl = eb.capacity
         else:
-            for idx in range(1, balances_length):
+            for idx in range(0, balances_length):
                 eb.lvl = simulate_eb_operation(eb, hourly_balances[:idx], start_energy)
                 is_full_eb_possible = eb.lvl + hourly_balances[idx] > self.max_energy
                 if is_full_eb_possible:
-                    idx_order = sort_list_idxes_ascending(prices[:idx])
                     balances_to_optimize = hourly_balances[:idx]
                     prices_to_optimize = prices[:idx]
-                    hourly_balances[:idx] = self._optimize_positive_balances(eb, start_energy, balances_to_optimize, idx_order, prices_to_optimize)
+                    hourly_balances[:idx] = self.optimize_positive_balances(eb, start_energy, balances_to_optimize, prices_to_optimize)
                 elif hourly_balances[idx] < 0.0:
                     hourly_balances[idx] = 0.0
                 else:
@@ -114,6 +122,12 @@ class DayPredictionStrategy(PredictionStrategy):
         return hourly_balances
 
     def positive_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
+        prices_length, balances_length = len(prices), len(hourly_balances)
+        if prices_length != balances_length:
+            raise Exception(f"prices and balances lengths must be equals: {prices_length} != {balances_length}")
+        elif any([price < 0 for price in prices]):
+            raise Exception("All prices must be >= 0")
+
         predicted_final_lvl = simulate_eb_operation(eb, hourly_balances)
         negative_index_list = [idx for idx, value in enumerate(hourly_balances) if value < 0.0]
         need = round(self.max_energy - predicted_final_lvl, 2)
@@ -124,7 +138,7 @@ class DayPredictionStrategy(PredictionStrategy):
             for idx in idx_order:
                 if idx in negative_index_list:
                     eb.lvl = simulate_eb_operation(eb, hourly_balances[:idx], start_energy)
-                    hourly_balances[idx:], need = self._optimize_balances(eb, need, hourly_balances[idx:])
+                    hourly_balances[idx:], need = self.optimize_mixed_balances(eb, need, hourly_balances[idx:])
                     if need <= 0.0:
                         break
         else:
