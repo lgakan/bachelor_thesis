@@ -1,22 +1,10 @@
-from scripts.energy_bank import EnergyBank
 import pytest
+
+from scripts.energy_bank import EnergyBank
+from tests.conftest import EbProps
 
 
 class TestEnergyBank:
-    CAPACITY = 5.0
-    LVL = 2.0
-    MIN_LVL = 0.5
-    COST = 1000.0
-    CYCLES = 1000
-
-    @pytest.fixture(scope="function")
-    def energy_bank(self) -> EnergyBank:
-        return EnergyBank(capacity=self.CAPACITY,
-                          min_lvl=self.MIN_LVL,
-                          lvl=self.LVL,
-                          purchase_cost=self.COST,
-                          cycles_num=self.CYCLES)
-
     def test_min_border(self, energy_bank: EnergyBank) -> None:
         energy_bank.lvl = energy_bank.min_lvl
         energy_bank.manage_energy(-1.0)
@@ -27,12 +15,16 @@ class TestEnergyBank:
         energy_bank.manage_energy(1.0)
         assert energy_bank.lvl == energy_bank.capacity
 
-    @pytest.mark.parametrize("balance_in, expected_lvl", [(-1.0, LVL-1.0), (-LVL, 0.0), (-(CAPACITY+1.0), MIN_LVL)])
+    @pytest.mark.parametrize("balance_in, expected_lvl", [(-1.0, EbProps.LVL-1.0),
+                                                          (-EbProps.LVL, EbProps.MIN_LVL),
+                                                          (-(EbProps.CAPACITY+1.0), EbProps.MIN_LVL)])
     def test_negative_balances(self, balance_in: float, expected_lvl: float, energy_bank: EnergyBank) -> None:
         energy_bank.manage_energy(balance_in)
         assert energy_bank.lvl == expected_lvl
 
-    @pytest.mark.parametrize("balance_in, expected_lvl", [(1.0, LVL+1.0), ((CAPACITY-LVL), CAPACITY), (CAPACITY+1.0, CAPACITY)])
+    @pytest.mark.parametrize("balance_in, expected_lvl", [(1.0, EbProps.LVL+1.0),
+                                                          ((EbProps.CAPACITY-EbProps.LVL), EbProps.CAPACITY),
+                                                          (EbProps.CAPACITY+1.0, EbProps.CAPACITY)])
     def test_positive_balances(self, balance_in: float, expected_lvl: float, energy_bank: EnergyBank) -> None:
         energy_bank.manage_energy(balance_in)
         assert energy_bank.lvl == expected_lvl
@@ -50,7 +42,7 @@ class TestEnergyBank:
         energy_bank.manage_energy(0)
         assert previous_energy_lvl == energy_bank.lvl
 
-    @pytest.mark.parametrize("invalid_new_lvl", [-2 * CAPACITY, 2 * CAPACITY, 'LVL', '11'])
+    @pytest.mark.parametrize("invalid_new_lvl", [-2 * EbProps.CAPACITY, 2 * EbProps.CAPACITY, 'LVL', '11'])
     def test_invalid_lvl(self, invalid_new_lvl, energy_bank: EnergyBank):
         with pytest.raises(Exception):
             energy_bank.lvl = invalid_new_lvl

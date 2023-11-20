@@ -50,7 +50,7 @@ class EnergyBank:
     def _release_energy(self, request_energy: float) -> float:
         if request_energy > 0:
             raise Exception(f"Energy: {request_energy} > 0")
-        if abs(request_energy) <= self._lvl:
+        if abs(request_energy) <= self._lvl - self.min_lvl:
             self._lvl += request_energy
             return 0.0
         else:

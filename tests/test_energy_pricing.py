@@ -22,7 +22,7 @@ class TestEnergyWebScaper:
 
     @pytest.fixture(scope="function")
     def web_scraper(self) -> EnergyWebScraper:
-        time.sleep(5)
+        time.sleep(3)
         yield EnergyWebScraper(prices_path=self.TEST_PATH, date_column="Date")
         if os.path.exists(self.TEST_PATH):
             os.remove(self.TEST_PATH)
