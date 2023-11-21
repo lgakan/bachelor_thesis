@@ -18,7 +18,7 @@ class Plotter:
     def __init__(self, columns_names: List[str]):
         self.df = pd.DataFrame({k: [] for k in ["Date"] + columns_names})
 
-    def add_data_row(self, data_row: List[DataTypes.DF_VALUES]) -> None:
+    def add_data_row(self, data_row: List[DataTypes.DF_VAL]) -> None:
         self.df.loc[len(self.df)] = data_row
 
     def plot_charts(self, title: str = "System Data") -> pd.DataFrame:

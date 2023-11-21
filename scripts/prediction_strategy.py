@@ -25,12 +25,14 @@ def simulate_eb_operation(eb: EnergyBank, balance_in: Union[float, List[float]],
 
 
 def separate_negative_prices(prices: List[float], balances: List[float]) -> List[List[float]]:
-    # [1, 2, -3, -4, 5, -6, 7] -> [[1, 2], [-3, -4], [5], [-6], [7]]
+    # [1.0, 2.0, -3.0, -4.0, 5.0, -6.0, 7.0] -> [[1.0, 2.0], [-3.0, -4.0], [5.0], [-6.0], [7.0]]
     if all([i > 0 for i in prices]):
         raise Exception("At least 1 price needs to be negative!")
     balances_lists = [[balances[0]]]
     for i in range(1, len(balances)):
-        if (prices[i - 1] > 0 and prices[i] > 0) or (prices[i - 1] < 0 and prices[i] < 0):
+        both_positive = prices[i - 1] > 0 and prices[i] > 0
+        both_negative = prices[i - 1] < 0 and prices[i] < 0
+        if both_positive or both_negative:
             balances_lists[-1].append(balances[i])
         else:
             balances_lists.append([balances[i]])
