@@ -9,7 +9,7 @@ from scripts.file_management import DfManager
 
 class Load:
     """
-    A class representing household power consumption.
+    Class simulating electricity consumption of a single-family home.
     """
 
     def __init__(self, date_column: Union[str, None] = None, multiplier: Union[None, int] = None):
@@ -45,7 +45,6 @@ class Load:
         return self.simulate_load_multiplier(load_value)
 
 
-# Example
-# if __name__ == "__main__":
-#     load = Load(column_name="Date")
-#     print(load.get_consumption_by_date(pd.to_datetime("01.01.2015 06:00:00")))
+if __name__ == "__main__":
+    load = Load(date_column="Date")
+    print(load.get_consumption_by_date(pd.to_datetime("01.01.2015 06:00:00")))

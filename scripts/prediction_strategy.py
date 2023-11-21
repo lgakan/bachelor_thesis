@@ -44,6 +44,11 @@ class PredictionStrategy(ABC):
 
 
 class DayPredictionStrategy(PredictionStrategy):
+    """
+    Class for organizing the daytime energy storage management plan. The goal is to end the day with the battery
+    storage maximally charged, while also reacting to the possibility of negative energy prices.
+    """
+
     def __init__(self, min_energy, max_energy):
         self.min_energy = min_energy
         self.max_energy = max_energy
@@ -142,6 +147,11 @@ class DayPredictionStrategy(PredictionStrategy):
 
 
 class NightPredictionStrategy(PredictionStrategy):
+    """
+    Class for arranging a nighttime energy bank management plan. The objective is to allocate the initial energy bank
+    level to ensure purchasing energy only during the cheapest hours when needed.
+    """
+
     def __init__(self, min_energy, max_energy):
         self.min_energy = min_energy
         self.max_energy = max_energy
