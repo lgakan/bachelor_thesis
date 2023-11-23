@@ -6,3 +6,4 @@ matplotlib == 3.5.3
 suntime
 plotly==5.17.0
 streamlit
+pytest

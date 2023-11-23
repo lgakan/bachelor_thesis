@@ -27,8 +27,11 @@ class EnergyBank:
         return self._lvl
 
     @lvl.setter
-    def lvl(self, new_lvl):
-        self._lvl = round(new_lvl, 2)
+    def lvl(self, new_lvl: float):
+        if self.min_lvl <= new_lvl <= self.capacity:
+            self._lvl = round(new_lvl, 2)
+        else:
+            raise Exception(f"Lvl: {new_lvl} must be between {self.min_lvl} and {self.capacity}")
 
     def manage_energy(self, input_energy: float) -> float:
         if input_energy < 0:
@@ -50,14 +53,16 @@ class EnergyBank:
     def _release_energy(self, request_energy: float) -> float:
         if request_energy > 0:
             raise Exception(f"Energy: {request_energy} > 0")
-        if abs(request_energy) <= self._lvl:
+        if abs(request_energy) <= self._lvl - self.min_lvl:
             self._lvl += request_energy
             return 0.0
         else:
             rest_energy = request_energy + self._lvl
-            self._lvl = 0.0
+            self._lvl = self.min_lvl
             return rest_energy
 
     def operation_cost(self, input_balance: float) -> float:
+        if self.purchase_cost < 0.0 or self._start_cycles_num < 0:
+            raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self.cycles_num} must be greater than 0")
         single_cycle_cost = self.purchase_cost / self.cycles_num
         return abs(input_balance) / 2 * single_cycle_cost

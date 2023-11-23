@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union
+from typing import Union, NewType
 
 
 class CustomEnum(Enum):
@@ -29,4 +29,4 @@ class PhotovoltaicDirection(CustomEnum):
 
 
 class DataTypes(CustomEnum):
-    DF_VALUES = Union[str, int, float]
+    DF_VAL = NewType("DF_VAL", Union[str, int, float])

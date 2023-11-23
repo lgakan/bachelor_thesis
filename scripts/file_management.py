@@ -37,10 +37,12 @@ class DfManager:
 
     def update_columns_names(self, cols_names: Dict[str, str]) -> None:
         df = self.get_from_file()
+        if any([x == self.date_col for x in cols_names.keys()]):
+            self.date_col = cols_names[self.date_col]
         df.rename(columns=cols_names, inplace=True)
         self.save_to_file(df)
 
-    def update_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str, val_new: DataTypes.DF_VALUES) -> None:
+    def update_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str, val_new: DataTypes.DF_VAL) -> None:
         df = self.get_from_file()
         if date_col in df.columns and df[date_col].dtype == "datetime64[ns]":
             df.loc[df[date_col] == date_in, val_col] = val_new
@@ -48,7 +50,7 @@ class DfManager:
         else:
             raise Exception(f"Column {val_col} is not valid")
 
-    def get_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str) -> DataTypes.DF_VALUES:
+    def get_cell_by_date(self, date_col: str, date_in: pd.Timestamp, val_col: str) -> DataTypes.DF_VAL:
         df = self.get_from_file()
         if date_col in df.columns and df[date_col].dtype == "datetime64[ns]":
             return df.loc[df[date_col] == date_in, val_col].values[0]
@@ -65,7 +67,7 @@ class DfManager:
             return False
         return True
 
-    def update_column_by_name(self, col_name: str, data: List[DataTypes.DF_VALUES]) -> None:
+    def update_column_by_name(self, col_name: str, data: List[DataTypes.DF_VAL]) -> None:
         df = self.get_from_file()
         if col_name in df.columns and len(data) == df.shape[0]:
             df.update({col_name: data})
