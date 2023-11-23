@@ -1,11 +1,15 @@
 class EnergyBank:
     """
-    A class representing an energy bank
+    Class simulating the behavior of an energy bank
 
     Attributes:
         capacity (float): Energy bank capacity expressed in kWh.
-        lvl (float): Current energy bank level expressed in kWh.
+        min_lvl (float): The min value that the energy bank can reach.
+        _lvl (float): Current energy bank level expressed in kWh.
+        purchase_cost (float): The cost of purchase
+        cycles_num (int): Number of cycles for which the warehouse will operate correctly
     """
+
     def __init__(self,
                  capacity: float = 3.0,
                  min_lvl: float = 0.0,
@@ -17,7 +21,6 @@ class EnergyBank:
         self._lvl = lvl
         self.purchase_cost = purchase_cost
         self.cycles_num = cycles_num
-        self._start_cycles_num = cycles_num
 
     @property
     def lvl(self):
@@ -60,6 +63,6 @@ class EnergyBank:
 
     def operation_cost(self, input_balance: float) -> float:
         if self.purchase_cost < 0.0 or self._start_cycles_num < 0:
-            raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self._start_cycles_num} must be greater than 0")
-        single_cycle_cost = self.purchase_cost / self._start_cycles_num
-        return round(abs(input_balance) / 2 * single_cycle_cost, 2)
+            raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self.cycles_num} must be greater than 0")
+        single_cycle_cost = self.purchase_cost / self.cycles_num
+        return abs(input_balance) / 2 * single_cycle_cost

@@ -16,6 +16,10 @@ class CSVManager:
 
 
 class DfManager:
+    """
+    Class responsible for handling the reading, writing, and editing of a pd.DataFrame from a .csv files.
+    """
+
     def __init__(self, path: str, date_col: str = "Date"):
         self.path = path
         self.date_col = date_col

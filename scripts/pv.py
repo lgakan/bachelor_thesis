@@ -12,11 +12,11 @@ from scripts.file_management import DfManager
 
 class Pv:
     """
-    A class representing household photovoltaic system.
+    Class simulating energy production by a photovoltaic installation
 
     Attributes:
         size (float): The size of photovoltaic installation expressed in kW.
-        direction (PhotovoltaicDirection): The photovoltaic installation: east-west or south.
+        direction (PhotovoltaicDirection): The direction of the photovoltaic installation: east or south.
     """
 
     def __init__(self,
@@ -89,6 +89,6 @@ class Pv:
             return [self.df_manager.get_cell_by_date(self.date_column, x, "PV gen (kW)") for x in dates]
 
 
-# if __name__ == "__main__":
-#     pv = Pv(date_column="Date")
-#     print(pv.get_production_by_date(pd.to_datetime("01.01.2015 06:00:00")))
+if __name__ == "__main__":
+    pv = Pv(date_column="Date")
+    print(pv.get_production_by_date(pd.to_datetime("01.01.2015 06:00:00")))
