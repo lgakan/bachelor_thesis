@@ -7,11 +7,11 @@ class EnergyBank:
         lvl (float): Current energy bank level expressed in kWh.
     """
     def __init__(self,
-                 capacity: float = 3.0,
+                 capacity: float = 6.75,
                  min_lvl: float = 0.0,
                  lvl: float = 1.0,
                  purchase_cost: float = 500.0,
-                 cycles_num: int = 5000):
+                 cycles_num: int = 8000):
         self.capacity = capacity
         self.min_lvl = min_lvl
         self._lvl = lvl
@@ -62,4 +62,5 @@ class EnergyBank:
         if self.purchase_cost < 0.0 or self._start_cycles_num < 0:
             raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self._start_cycles_num} must be greater than 0")
         single_cycle_cost = self.purchase_cost / self._start_cycles_num
-        return round(abs(input_balance) / 2 * single_cycle_cost, 2)
+        cycle_part = abs(input_balance) / (2 * self.capacity)
+        return round(cycle_part / single_cycle_cost, 2)

@@ -25,7 +25,7 @@ class TestDayAlgorithm:
     def test_basic_optimize_positive_balances(self, energy_bank: EnergyBank, day_strategy: DayPredictionStrategy) -> None:
         prices = [127.69, -129.71, 40.53, 50.14, -150.79, 14.88]
         balances = [0.08, 0.89, 0.45, 0.15, 0.18, 1.05]
-        output_balances= day_strategy.optimize_positive_balances(energy_bank, energy_bank.lvl, balances, prices)
+        output_balances = day_strategy.optimize_positive_balances(energy_bank, energy_bank.lvl, balances, prices)
         assert output_balances == [0.08, 0.89, 0.45, 0.15, 0.18, 1.05]
 
     def test_basic_mixed_prices_handler(self, energy_bank: EnergyBank, day_strategy: DayPredictionStrategy) -> None:

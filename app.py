@@ -36,13 +36,13 @@ st.title("Energy Management System")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    eb_capacity = st.number_input("Energy bank capacity:", min_value=3.0, max_value=10.0, value=3.0)
+    eb_capacity = st.number_input("Energy bank capacity:", min_value=0.0, max_value=15.0, value=3.6 * 2)
 with col2:
-    eb_cost = st.number_input("Energy bank cost [zl]:", min_value=0.0, step=1.0, value=500.0)
+    eb_cost = st.number_input("Energy bank cost [zl]:", min_value=0.0, step=1.0, value=1600.0*2)
 with col3:
-    eb_cycles = st.number_input("Energy bank cycles:", min_value=0, value=500)
+    eb_cycles = st.number_input("Energy bank cycles:", min_value=0, value=8000)
 with col4:
-    eb_min_lvl = st.number_input("Energy bank min value:", min_value=0.0, max_value=eb_capacity / 2, value=1.0)
+    eb_min_lvl = st.number_input("Energy bank min value:", min_value=0.0, max_value=eb_capacity / 2, value=0.23 * 2)
 with col5:
     eb_start_lvl = st.number_input("Energy bank start lvl:", min_value=eb_min_lvl, max_value=eb_capacity, value=eb_min_lvl)
 

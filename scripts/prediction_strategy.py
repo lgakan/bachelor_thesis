@@ -169,8 +169,6 @@ class NightPredictionStrategy(PredictionStrategy):
             raise Exception(f"idx_order and balances lengths must be equals: {order_length} != {balances_length}")
         elif set(idx_order) != set(i for i in range(balances_length)):
             raise Exception(f"idx_order: {idx_order} contains wrong idxes")
-        elif any([start_energy + sum(hourly_balances_in[:i]) < eb.min_lvl for i in range(1, balances_length)]):
-            raise Exception("Only the last element can cause the energy to drop below the minimum")
 
         extra = simulate_eb_operation(eb, hourly_balances_in[:-1], start_energy) + hourly_balances_in[-1] - eb.min_lvl
         if extra > eb.min_lvl:
@@ -220,7 +218,7 @@ class NightPredictionStrategy(PredictionStrategy):
         start_energy = eb.lvl
         for idx in range(balances_length):
             eb.manage_energy(hourly_balances[idx])
-            if eb.lvl == self.min_energy:
+            if eb.lvl <= self.min_energy:
                 idx_desc_order = sort_list_idxes_ascending(prices[:idx + 1])
                 hourly_balances[:idx + 1] = self.calculate_hourly_balances(eb, idx_desc_order, hourly_balances[:idx + 1], start_energy)
         return hourly_balances
