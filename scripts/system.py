@@ -55,10 +55,6 @@ class PvSystem(SystemBase):
 
     @staticmethod
     def calculate_cost(price: float, consumption: float) -> float:
-        if consumption < 0.0:
-            raise Exception(f"Consumption: {consumption} must be greater than 0.0")
-        if price < 0.0 < consumption:
-            return -consumption * price
         return consumption * price
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
@@ -91,9 +87,9 @@ class RawFullSystem(SystemBase):
         bank_lvl = self.energy_bank.lvl
         balance_after_bank = self.energy_bank.manage_energy(balance)
         if balance >= 0.0:
-            cost = - balance_after_bank * price + self.energy_bank.operation_cost(balance - balance_after_bank)
+            cost = -balance_after_bank * price + self.energy_bank.operation_cost(balance - balance_after_bank)
         else:
-            cost = - balance_after_bank * price + self.energy_bank.operation_cost(min(bank_lvl, abs(balance)))
+            cost = -balance_after_bank * price + self.energy_bank.operation_cost(min(bank_lvl, abs(balance)))
         return cost
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
@@ -153,26 +149,29 @@ class SmartSystem(SystemBase):
         # elif predicted_bal <= 0.0 and real_bal <= 0.0:
         #     return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
         # raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
-        if price >= 0.0 and price >= self.average_energy_cost:
+        if (price >= 0.0 and price >= self.average_energy_cost) or real_bal >= 0.0:
             if predicted_bal >= 0.0 and real_bal >= 0.0:
                 return self._calculate_cost_positive_balance(price, predicted_bal, real_bal)
             elif predicted_bal <= 0.0 and real_bal <= 0.0:
                 return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
             raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
-        elif 0.0 < price < self.average_energy_cost:
+        elif real_bal < 0.0 < price < self.average_energy_cost:
             return -real_bal * price
+        raise Exception("Error!")
 
     def _calculate_cost_positive_balance(self, price: float, predicted_bal: float, real_bal: float) -> float:
         if real_bal < 0.0 or predicted_bal < 0.0:
             raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be positive!")
         bank_free_space = self.energy_bank.capacity - self.energy_bank.lvl
         if real_bal <= bank_free_space:
-            if real_bal >= predicted_bal:
-                self.energy_bank.manage_energy(predicted_bal)
-                return -round(real_bal - predicted_bal, 2) * price + self.energy_bank.operation_cost(predicted_bal)
-            else:
-                self.energy_bank.manage_energy(min(real_bal, predicted_bal))
-                return self.energy_bank.operation_cost(min(real_bal, predicted_bal))
+            self.energy_bank.manage_energy(real_bal)
+            return self.energy_bank.operation_cost(real_bal)
+            # if real_bal >= predicted_bal:
+            #     self.energy_bank.manage_energy(predicted_bal)
+            #     return -round(real_bal - predicted_bal, 2) * price + self.energy_bank.operation_cost(predicted_bal)
+            # else:
+            #     self.energy_bank.manage_energy(min(real_bal, predicted_bal))
+            #     return self.energy_bank.operation_cost(min(real_bal, predicted_bal))
         else:
             if real_bal >= bank_free_space >= predicted_bal:
                 self.energy_bank.manage_energy(predicted_bal)
@@ -192,8 +191,10 @@ class SmartSystem(SystemBase):
             return -round(real_bal + bank_lvl, 2) * price + self.energy_bank.operation_cost(bank_lvl)
         elif real_bal < predicted_bal and abs_pred <= bank_lvl:
             reduced_predicted_bal = self.energy_bank.manage_energy(predicted_bal)
-            prediction_diff = predicted_bal + reduced_predicted_bal
-            return -round(real_bal + prediction_diff, 2) * price + self.energy_bank.operation_cost(prediction_diff)
+            prediction_diff = predicted_bal - reduced_predicted_bal
+            return -round(real_bal - prediction_diff, 2) * price + self.energy_bank.operation_cost(prediction_diff)
+            # prediction_diff = predicted_bal + reduced_predicted_bal
+            # return -round(real_bal + prediction_diff, 2) * price + self.energy_bank.operation_cost(prediction_diff)
         elif real_bal >= predicted_bal and abs_real <= bank_lvl:
             reduced_real_bal = self.energy_bank.manage_energy(real_bal)
             real_diff = real_bal - reduced_real_bal

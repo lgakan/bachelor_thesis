@@ -19,14 +19,16 @@ class TestPvSystemCost:
     def test_positive_prices(self):
         pv_system = PvSystem()
         price = random.uniform(0.1, 500.0)
-        positive_consumption = random.uniform(0.1, 10.0)
+        positive_consumption, negative_consumption = random.uniform(0.1, 10.0), random.uniform(-10.0, -0.1)
         assert pv_system.calculate_cost(price, positive_consumption) == price * positive_consumption
+        assert pv_system.calculate_cost(price, negative_consumption) == price * negative_consumption
 
     def test_negative_prices(self):
         pv_system = PvSystem()
         price = random.uniform(-500.0, -0.1)
-        positive_consumption = random.uniform(0.1, 10.0)
-        assert pv_system.calculate_cost(price, positive_consumption) == -price * positive_consumption
+        positive_consumption, negative_consumption = random.uniform(0.1, 10.0), random.uniform(-10.0, -0.1)
+        assert pv_system.calculate_cost(price, positive_consumption) == price * positive_consumption
+        assert pv_system.calculate_cost(price, negative_consumption) == price * negative_consumption
 
 
 class TestRawFullSystemCost:
