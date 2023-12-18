@@ -44,7 +44,7 @@ class BareSystem(SystemBase):
         consumption = round(fake_consumption * random.uniform(0.8, 1.2), 2)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         cost = self.calculate_cost(consumption, rce_price)
-        self.summed_cost += cost / 1000
+        self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, 0, 0, self.summed_cost])
 
 
@@ -65,7 +65,8 @@ class PvSystem(SystemBase):
         random.seed(0)
         reduced_consumption = round(fake_reduced_consumption * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, reduced_consumption)
-        self.summed_cost += cost / 1000
+        logger.info(f"PvSystem current cost: {cost}")
+        self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, production, 0, self.summed_cost])
 
 
@@ -82,6 +83,7 @@ class RawFullSystem(SystemBase):
         self.producer = Pv(date_column="Date", size=pv_size)
         self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
                                       purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
+        # self.bank_history = []
 
     def calculate_cost(self, price: float, balance: float) -> float:
         bank_lvl = self.energy_bank.lvl
@@ -101,7 +103,9 @@ class RawFullSystem(SystemBase):
         current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, current_balance)
         logger.info(f"RawSystem current cost: {cost}")
-        self.summed_cost += cost / 1000
+        logger.info(f"RawSystem current bank lvl: {self.energy_bank.lvl}")
+        # self.bank_history.append(self.energy_bank.lvl)
+        self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
 
 
@@ -122,6 +126,7 @@ class SmartSystem(SystemBase):
         self._prediction_strategy = None
         self.energy_plan = None
         self.average_energy_cost = None
+        # self.bank_history = []
 
     @property
     def prediction_strategy(self) -> PredictionStrategy:
@@ -144,34 +149,59 @@ class SmartSystem(SystemBase):
         self.average_energy_cost = sum(prices) / len(prices)
 
     def calculate_cost(self, price: float, predicted_bal: float, real_bal: float) -> float:
-        # if predicted_bal >= 0.0 and real_bal >= 0.0:
-        #     return self._calculate_cost_positive_balance(price, predicted_bal, real_bal)
-        # elif predicted_bal <= 0.0 and real_bal <= 0.0:
-        #     return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
-        # raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
-        if (price >= 0.0 and price >= self.average_energy_cost) or real_bal >= 0.0:
+        # if price >= 0.0:
+        #     if predicted_bal >= 0.0 and real_bal >= 0.0:
+        #         return self._calculate_cost_positive_balance(price, predicted_bal, real_bal)
+        #     elif predicted_bal <= 0.0 and real_bal <= 0.0:
+        #         return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
+        #     raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
+        # else:
+        #     bank_free_space = self.energy_bank.capacity - self.energy_bank.lvl
+        #     bank_filling_cost = 0.0
+        #     if isinstance(self._prediction_strategy, NightPredictionStrategy):
+        #         self.energy_bank.manage_energy(bank_free_space)
+        #         bank_filling_cost = self.energy_bank.operation_cost(bank_free_space)
+        #     if predicted_bal >= 0.0 and real_bal >= 0.0:
+        #         return self._calculate_cost_positive_balance(price, predicted_bal, real_bal) + bank_filling_cost
+        #     elif predicted_bal <= 0.0 and real_bal <= 0.0:
+        #         return self._calculate_cost_negative_balance(price, predicted_bal, real_bal) + bank_filling_cost
+        #     raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
+
+        if price >= 0.0:
+            if price >= self.average_energy_cost or real_bal >= 0.0:
+                if predicted_bal >= 0.0 and real_bal >= 0.0:
+                    return self._calculate_cost_positive_balance(price, predicted_bal, real_bal)
+                elif predicted_bal <= 0.0 and real_bal <= 0.0:
+                    return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
+                raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
+            elif real_bal < 0.0 < price < self.average_energy_cost:
+                return -real_bal * price
+        else:
+            bank_free_space = self.energy_bank.capacity - self.energy_bank.lvl
+            bank_filling_cost = 0.0
+            if isinstance(self._prediction_strategy, NightPredictionStrategy):
+                self.energy_bank.manage_energy(bank_free_space)
+                bank_filling_cost = self.energy_bank.operation_cost(bank_free_space)
             if predicted_bal >= 0.0 and real_bal >= 0.0:
-                return self._calculate_cost_positive_balance(price, predicted_bal, real_bal)
+                return self._calculate_cost_positive_balance(price, predicted_bal, real_bal) + bank_filling_cost
             elif predicted_bal <= 0.0 and real_bal <= 0.0:
-                return self._calculate_cost_negative_balance(price, predicted_bal, real_bal)
+                return self._calculate_cost_negative_balance(price, predicted_bal, real_bal) + bank_filling_cost
             raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be of the same sign!")
-        elif real_bal < 0.0 < price < self.average_energy_cost:
-            return -real_bal * price
-        raise Exception("Error!")
 
     def _calculate_cost_positive_balance(self, price: float, predicted_bal: float, real_bal: float) -> float:
         if real_bal < 0.0 or predicted_bal < 0.0:
             raise Exception(f"predicted_bal: {predicted_bal} and real_bal: {real_bal} must be positive!")
         bank_free_space = self.energy_bank.capacity - self.energy_bank.lvl
         if real_bal <= bank_free_space:
-            self.energy_bank.manage_energy(real_bal)
-            return self.energy_bank.operation_cost(real_bal)
-            # if real_bal >= predicted_bal:
-            #     self.energy_bank.manage_energy(predicted_bal)
-            #     return -round(real_bal - predicted_bal, 2) * price + self.energy_bank.operation_cost(predicted_bal)
-            # else:
-            #     self.energy_bank.manage_energy(min(real_bal, predicted_bal))
-            #     return self.energy_bank.operation_cost(min(real_bal, predicted_bal))
+            # TODO: CHECK
+            # self.energy_bank.manage_energy(real_bal)
+            # return self.energy_bank.operation_cost(real_bal)
+            if real_bal >= predicted_bal:
+                self.energy_bank.manage_energy(predicted_bal)
+                return -round(real_bal - predicted_bal, 2) * price + self.energy_bank.operation_cost(predicted_bal)
+            else:
+                self.energy_bank.manage_energy(real_bal)
+                return self.energy_bank.operation_cost(real_bal)
         else:
             if real_bal >= bank_free_space >= predicted_bal:
                 self.energy_bank.manage_energy(predicted_bal)
@@ -193,8 +223,6 @@ class SmartSystem(SystemBase):
             reduced_predicted_bal = self.energy_bank.manage_energy(predicted_bal)
             prediction_diff = predicted_bal - reduced_predicted_bal
             return -round(real_bal - prediction_diff, 2) * price + self.energy_bank.operation_cost(prediction_diff)
-            # prediction_diff = predicted_bal + reduced_predicted_bal
-            # return -round(real_bal + prediction_diff, 2) * price + self.energy_bank.operation_cost(prediction_diff)
         elif real_bal >= predicted_bal and abs_real <= bank_lvl:
             reduced_real_bal = self.energy_bank.manage_energy(real_bal)
             real_diff = real_bal - reduced_real_bal
@@ -204,7 +232,6 @@ class SmartSystem(SystemBase):
     def create_energy_plan(self, date_in: pd.Timestamp) -> None:
         start = date_in
         sunrise, sunset = self.sun_manager.get_sun_data(date_in)
-        logger.info(f"sunrise: {sunrise} and sunset: {sunset}")
         if date_in.hour >= sunset:
             self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
             end = start.replace(day=date_in.day + 1, hour=sunrise)
@@ -214,25 +241,18 @@ class SmartSystem(SystemBase):
         else:
             self.prediction_strategy = NightPredictionStrategy(self.energy_bank.min_lvl, self.energy_bank.capacity)
             end = start.replace(hour=sunrise)
-        if self.average_energy_cost is None or start.hour == 0:
-            self.calculate_average_energy_cost(start, start.replace(hour=23))
+        if self.average_energy_cost is None or start.hour == sunset or start.hour == sunrise:
+            self.calculate_average_energy_cost(start, end)
         rce_prices = self.energy_pricer.get_rce_by_date(start, end)
         consumptions = self.consumer.get_consumption_by_date(start, end)
         productions = self.producer.get_production_by_date(start, end)
         balances = [round(prod - cons, 2) for (prod, cons) in zip(productions, consumptions)]
         dates = pd.date_range(start=start, end=end, freq=timedelta(hours=1))
-        # logger.info(f"Input rce_prices: {rce_prices}")
-        # logger.info(f"Input productions: {productions}")
-        # logger.info(f"Input consumptions: {consumptions}")
-        # logger.info(f"Input balances: {balances}")
         energy_plan = self.prediction_strategy.get_plan(self.energy_bank.lvl, rce_prices, balances)
-        # logger.info(f"energy_plan: {energy_plan}")
         self.energy_plan = {k: v for k, v in zip(dates, energy_plan)}
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         self.create_energy_plan(date_in)
-        # if self.prediction_strategy is None or self.energy_plan is None:
-        #     self.create_energy_plan(date_in)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         consumption = self.consumer.get_consumption_by_date(date_in)
         production = self.producer.get_production_by_date(date_in)
@@ -242,9 +262,9 @@ class SmartSystem(SystemBase):
         predicted_balance = self.energy_plan[date_in]
         cost = self.calculate_cost(rce_price, predicted_balance, current_balance)
         logger.info(f"SmartSystem current cost: {cost}")
-        self.summed_cost += cost / 1000
-        # if self.energy_plan.get(date_in + timedelta(hours=1)) is None:
-        #     self.energy_plan = None
+        logger.info(f"SmartSystem current bank lvl: {self.energy_bank.lvl}")
+        # self.bank_history.append(self.energy_bank.lvl)
+        self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
 
 
@@ -263,6 +283,7 @@ class SmartSaveSystem(SystemBase):
                                       purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
         self.sun_manager = SunManager()
         self.average_energy_cost = None
+        # self.bank_history = []
 
     def calculate_average_energy_cost(self, start: pd.Timestamp, end: pd.Timestamp) -> None:
         rce_prices = self.energy_pricer.get_rce_by_date(start, end)
@@ -273,10 +294,10 @@ class SmartSaveSystem(SystemBase):
         if price >= 0.0:
             if balance >= 0.0:
                 if price >= self.average_energy_cost + bank_operation_cost:
-                    cost = - balance * price
+                    cost = -balance * price
                 else:
                     rest_energy = self.energy_bank.manage_energy(balance)
-                    cost = - rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
+                    cost = -rest_energy * price + self.energy_bank.operation_cost(balance-rest_energy)
             else:
                 if price >= self.average_energy_cost + bank_operation_cost:
                     rest_energy = self.energy_bank.manage_energy(balance)
@@ -295,7 +316,6 @@ class SmartSaveSystem(SystemBase):
 
     def feed_consumption(self, date_in: pd.Timestamp) -> None:
         sunrise, sunset = self.sun_manager.get_sun_data(date_in)
-        logger.info(f"sunrise: {sunrise} and sunset: {sunset}")
         if date_in.hour == sunset or date_in.hour == sunrise or self.average_energy_cost is None:
             if date_in.hour >= sunset:
                 end = date_in.replace(day=date_in.day + 1, hour=sunrise)
@@ -312,5 +332,7 @@ class SmartSaveSystem(SystemBase):
         current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, current_balance)
         logger.info(f"SaveSystem current cost: {cost}")
-        self.summed_cost += round(cost / 1000, 2)
+        logger.info(f"SaveSystem current bank lvl: {self.energy_bank.lvl}")
+        # self.bank_history.append(self.energy_bank.lvl)
+        self.summed_cost += cost
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])

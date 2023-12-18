@@ -25,7 +25,9 @@ class EnergyWebScraper:
         else:
             url = Config.CSV_DOWNLOAD_LINK + "data_od/" + date_start.strftime("%Y%m%d") + "/data_do/" + date_end.strftime("%Y%m%d")
         response = requests.get(url)
-        return pd.read_csv(StringIO(response.content.decode('utf-8')), sep=';', decimal=',')
+        df = pd.read_csv(StringIO(response.content.decode('utf-8')), sep=';', decimal=',')
+        df["RCE"] = (df["RCE"] / 1000).round(2)
+        return df
 
     @staticmethod
     def simulate_negative_prices(prices: List[float], start_idx: int = 20, negative_amount: int = 7) -> List[float]:

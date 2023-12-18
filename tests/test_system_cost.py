@@ -112,6 +112,7 @@ class TestSmartSystemCost:
     def test_positive_prices_positive_balance(self):
         smart_system = SmartSystem(**self.SYSTEM_INPUT)
         price = random.uniform(0.1, 500.0)
+        smart_system.average_energy_cost = 0.0
         rel_bal_in_range, rel_bal_out_range = random.uniform(1.1, 2.0), random.uniform(7.1, 8.0)
         pred_bal_in_range_s, pred_bal_in_range_h = random.uniform(0.1, 1.0), random.uniform(2.1, 3.0)
         pred_bal_out_range_s, pred_bal_out_range_h = random.uniform(6.1, 7.0), random.uniform(8.1, 10.0)
@@ -155,6 +156,7 @@ class TestSmartSystemCost:
     def test_positive_prices_negative_balance(self):
         smart_system = SmartSystem(**self.SYSTEM_INPUT)
         price = random.uniform(0.1, 500.0)
+        smart_system.average_energy_cost = 0.0
         rel_bal_in_range, rel_bal_out_range = random.uniform(-2.0, -1.1), random.uniform(-8.0, -7.1)
         pred_bal_in_range_s, pred_bal_in_range_h = random.uniform(-1.0, -0.1), random.uniform(-3.0, -2.1)
         pred_bal_out_range_s, pred_bal_out_range_h = random.uniform(-7.0, -6.1), random.uniform(-10.0, -8.1)
@@ -167,7 +169,7 @@ class TestSmartSystemCost:
         # B: 3.0/6.0, R: -2.0, P: -1.0
         smart_system.energy_bank.lvl = self.bank_start_lvl
         bank_op_cost = smart_system.energy_bank.operation_cost(pred_bal_in_range_s)
-        expense = round(rel_bal_in_range + pred_bal_in_range_s, 2) * price
+        expense = round(rel_bal_in_range - pred_bal_in_range_s, 2) * price
         assert smart_system.calculate_cost(price, pred_bal_in_range_s, rel_bal_in_range) == -expense + bank_op_cost
         assert smart_system.energy_bank.lvl == self.bank_start_lvl + pred_bal_in_range_s
 
@@ -197,7 +199,7 @@ class TestSmartSystemCost:
         # B: 3.0/6.0, R: -8.0, P: -1.0
         smart_system.energy_bank.lvl = self.bank_start_lvl
         bank_op_cost = smart_system.energy_bank.operation_cost(pred_bal_in_range_s)
-        expense = round(rel_bal_out_range + pred_bal_in_range_s, 2) * price
+        expense = round(rel_bal_out_range - pred_bal_in_range_s, 2) * price
         assert smart_system.calculate_cost(price, pred_bal_in_range_s, rel_bal_out_range) == -expense + bank_op_cost
         assert smart_system.energy_bank.lvl == self.bank_start_lvl + pred_bal_in_range_s
 

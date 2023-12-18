@@ -57,7 +57,7 @@ class EnergyBank:
             self._lvl += request_energy
             return 0.0
         else:
-            rest_energy = request_energy + self._lvl
+            rest_energy = request_energy + (self._lvl - self.min_lvl)
             self._lvl = self.min_lvl
             return rest_energy
 
@@ -66,4 +66,4 @@ class EnergyBank:
             raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self.cycles_num} must be greater than 0")
         single_cycle_cost = self.purchase_cost / self.cycles_num
         cycle_part = abs(input_balance) / (2 * self.capacity)
-        return round(cycle_part / single_cycle_cost, 2)
+        return round(cycle_part * single_cycle_cost, 2)
