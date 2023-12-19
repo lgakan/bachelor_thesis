@@ -179,7 +179,6 @@ class NightPredictionStrategy(PredictionStrategy):
             raise Exception(f"idx_order and balances lengths must be equals: {order_length} != {balances_length}")
         elif set(idx_order) != set(i for i in range(balances_length)):
             raise Exception(f"idx_order: {idx_order} contains wrong idxes")
-
         extra = simulate_eb_operation(eb, hourly_balances_in[:-1], start_energy) + hourly_balances_in[-1] - eb.min_lvl
         if extra > eb.min_lvl:
             return [round(x, 2) for x in hourly_balances_in]
