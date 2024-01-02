@@ -1,10 +1,11 @@
+import os
 from datetime import timedelta
 from io import StringIO
 from typing import Union, List
 
 import pandas as pd
 import requests
-import os
+
 from lib.config import Config
 from scripts.file_management import DfManager
 
@@ -30,8 +31,13 @@ class EnergyWebScraper:
         return df
 
     @staticmethod
-    def simulate_negative_prices(prices: List[float], start_idx: int = 20, negative_amount: int = 7) -> List[float]:
-        if start_idx + negative_amount < len(prices):
+    def simulate_negative_prices(prices: List[float], start_idx: int = 10, negative_amount: int = 2) -> List[float]:
+        prices_len = len(prices)
+        if start_idx + negative_amount < prices_len:
+            if prices_len != 24 or prices_len != 48:
+                raise Exception("Currently, the price fetching limit is set to a maximum of 48 hours!")
+            if prices_len == 48:
+                start_idx += 24
             prices[start_idx:start_idx + negative_amount] = [-x for x in prices[start_idx:start_idx + negative_amount]]
         return prices
 

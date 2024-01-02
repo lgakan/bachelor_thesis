@@ -78,7 +78,6 @@ class DayPredictionStrategy(PredictionStrategy):
     def optimize_positive_balances(self, eb: EnergyBank, start_energy: float, balances: List[float], prices: List[float]) -> List[float]:
         if any([balance < 0 for balance in balances]):
             raise Exception("All balances must be >= 0")
-
         prices_order = sort_list_idxes_ascending(prices)
         if prices_order[-1] == len(balances) - 1:
             return balances
@@ -92,7 +91,8 @@ class DayPredictionStrategy(PredictionStrategy):
 
     def mixed_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:
         balances_groups = separate_negative_prices(prices, hourly_balances)
-        for idx_list in range(len(balances_groups)):
+        balance_group_len = len(balances_groups)
+        for idx_list in range(balance_group_len):
             idx_group_start = len([element for sublist in balances_groups[:idx_list] for element in sublist])
             idx_group_end = idx_group_start + len(balances_groups[idx_list])
             group_first_price = prices[idx_group_start]
@@ -100,6 +100,10 @@ class DayPredictionStrategy(PredictionStrategy):
             group_balances = hourly_balances[idx_group_start:idx_group_end]
             if group_first_price > 0:
                 hourly_balances[idx_group_start:idx_group_end] = self.positive_prices_handler(eb, start_energy, group_prices, group_balances)
+                if idx_list != balance_group_len - 1:
+                    summed_values = sum(balances_groups[idx_list + 1])
+                    if summed_values >= 0.0:
+                        hourly_balances[idx_group_end - 1] = -summed_values
             else:
                 hourly_balances[idx_group_start:idx_group_end] = self.negative_prices_handler(eb, start_energy, group_prices, group_balances)
         return hourly_balances
@@ -110,12 +114,12 @@ class DayPredictionStrategy(PredictionStrategy):
             raise Exception(f"prices and balances lengths must be equals: {prices_length} != {balances_length}")
         elif any([price > 0 for price in prices]):
             raise Exception("All prices must be <= 0")
-
         if balances_length == 1:
-            hourly_balances[0] = 0.0
+            hourly_balances[0] = eb.capacity - eb.lvl
             eb.lvl = eb.capacity
         else:
-            for idx in range(0, balances_length):
+            hourly_balances = [b if b >= 0.0 else 0.0 for b in hourly_balances]
+            for idx in range(1, balances_length):
                 eb.lvl = simulate_eb_operation(eb, hourly_balances[:idx], start_energy)
                 is_full_eb_possible = eb.lvl + hourly_balances[idx] > self.max_energy
                 if is_full_eb_possible:
@@ -126,6 +130,7 @@ class DayPredictionStrategy(PredictionStrategy):
                     hourly_balances[idx] = 0.0
                 else:
                     eb.lvl += hourly_balances[idx]
+            hourly_balances[-1] = eb.capacity - eb.lvl
         return hourly_balances
 
     def positive_prices_handler(self, eb: EnergyBank, start_energy: float, prices: List[float], hourly_balances: List[float]) -> List[float]:

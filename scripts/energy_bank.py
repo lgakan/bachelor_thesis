@@ -28,8 +28,9 @@ class EnergyBank:
 
     @lvl.setter
     def lvl(self, new_lvl: float):
-        if self.min_lvl <= new_lvl <= self.capacity:
-            self._lvl = round(new_lvl, 2)
+        rounded_lvl = round(new_lvl, 2)
+        if self.min_lvl <= rounded_lvl <= self.capacity:
+            self._lvl = rounded_lvl
         else:
             raise Exception(f"Lvl: {new_lvl} must be between {self.min_lvl} and {self.capacity}")
 
