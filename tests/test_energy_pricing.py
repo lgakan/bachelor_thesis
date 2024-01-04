@@ -62,18 +62,18 @@ class TestEnergyWebScaper:
         web_scraper.get_prices_file_by_date(date_start, date_end)
         assert os.path.exists(self.TEST_PATH)
 
-    @pytest.mark.parametrize("str_date_in, expected_rce", [("10.01.2023 03:00:00", 612.54),
-                                                           ("03.04.2023 09:00:00", 578.42),
-                                                           ("31.10.2023 00:00:00", 384.36)])
+    @pytest.mark.parametrize("str_date_in, expected_rce", [("10.01.2023 03:00:00", 0.61),
+                                                           ("03.04.2023 09:00:00", 0.58),
+                                                           ("31.10.2023 00:00:00", 0.38)])
     def test_get_single_rce_by_date(self, str_date_in: str, expected_rce: float, web_scraper: EnergyWebScraper) -> None:
         date_in = pd.to_datetime(str_date_in, format="%d.%m.%Y %H:%M:%S")
         rce_val = web_scraper.get_rce_by_date(date_in)
         assert rce_val == expected_rce
 
     @pytest.mark.parametrize("date_start, date_end, expected_list_rce", [
-        ("10.01.2023 01:00:00", "10.01.2023 05:00:00", [601.39, 603.84, 612.54, 620.74, 699.16]),
-        ("03.04.2023 21:00:00", "03.04.2023 02:00:00", [647.36, 636.76, 583.75]),
-        ("31.10.2023 23:00:00", "01.11.2023 01:00:00", [412.07, 250.11, 234.69])])
+        ("10.01.2023 01:00:00", "10.01.2023 05:00:00", [0.60, 0.60, 0.61, 0.62, 0.70]),
+        ("03.04.2023 21:00:00", "03.04.2023 02:00:00", []),
+        ("31.10.2023 23:00:00", "01.11.2023 01:00:00", [0.41, 0.25, 0.23])])
     def test_get_multi_rce_by_dates(self, date_start: str, date_end: str, expected_list_rce: List[float], web_scraper: EnergyWebScraper) -> None:
         date_s, date_e = pd.to_datetime(date_start, format="%d.%m.%Y %H:%M:%S"), pd.to_datetime(date_end, format="%d.%m.%Y %H:%M:%S")
         list_rce = web_scraper.get_rce_by_date(date_s, date_e)

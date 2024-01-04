@@ -11,11 +11,11 @@ class EnergyBank:
     """
 
     def __init__(self,
-                 capacity: float = 3.0,
+                 capacity: float = 6.75,
                  min_lvl: float = 0.0,
                  lvl: float = 1.0,
                  purchase_cost: float = 500.0,
-                 cycles_num: int = 5000):
+                 cycles_num: int = 8000):
         self.capacity = capacity
         self.min_lvl = min_lvl
         self._lvl = lvl
@@ -28,8 +28,9 @@ class EnergyBank:
 
     @lvl.setter
     def lvl(self, new_lvl: float):
-        if self.min_lvl <= new_lvl <= self.capacity:
-            self._lvl = round(new_lvl, 2)
+        rounded_lvl = round(new_lvl, 2)
+        if self.min_lvl <= rounded_lvl <= self.capacity:
+            self._lvl = rounded_lvl
         else:
             raise Exception(f"Lvl: {new_lvl} must be between {self.min_lvl} and {self.capacity}")
 
@@ -57,12 +58,13 @@ class EnergyBank:
             self._lvl += request_energy
             return 0.0
         else:
-            rest_energy = request_energy + self._lvl
+            rest_energy = request_energy + (self._lvl - self.min_lvl)
             self._lvl = self.min_lvl
             return rest_energy
 
     def operation_cost(self, input_balance: float) -> float:
-        if self.purchase_cost < 0.0 or self._start_cycles_num < 0:
+        if self.purchase_cost < 0.0 or self.cycles_num < 0:
             raise Exception(f"Purchase cost: {self.purchase_cost} and start cycles number: {self.cycles_num} must be greater than 0")
         single_cycle_cost = self.purchase_cost / self.cycles_num
-        return abs(input_balance) / 2 * single_cycle_cost
+        cycle_part = abs(input_balance) / (2 * self.capacity)
+        return round(cycle_part * single_cycle_cost, 2)

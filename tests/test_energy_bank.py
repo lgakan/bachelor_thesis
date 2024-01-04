@@ -29,13 +29,13 @@ class TestEnergyBank:
         energy_bank.manage_energy(balance_in)
         assert energy_bank.lvl == expected_lvl
 
-    @pytest.mark.parametrize("cost_in, cycles_in, balance_input,expected_cost", [(1.0, 1, 5, 2.5),
-                                                                                 (400.0, 5.0, 5, 200),
-                                                                                 (20.0, 40, 10, 2.5)])
-    def test_operation_cost_calculating(self, cost_in: float, cycles_in: int, balance_input: float, expected_cost: float):
-        energy_bank = EnergyBank(purchase_cost=cost_in, cycles_num=cycles_in)
-        assert energy_bank.operation_cost(balance_input) == expected_cost
-        assert energy_bank.operation_cost(-balance_input) == expected_cost
+    @pytest.mark.parametrize("cost, cycles, capacity, balance, expected_cost", [(1.0, 1, 1.0, 5.0, 2.5),
+                                                                                (400.0, 5, 5.0, 5.0, 40.0),
+                                                                                (20.0, 40, 10.0, 10.0, 0.25)])
+    def test_operation_cost_calculating(self, cost: float, cycles: int, capacity: float, balance: float, expected_cost: float):
+        energy_bank = EnergyBank(purchase_cost=cost, cycles_num=cycles, capacity=capacity)
+        assert energy_bank.operation_cost(balance) == expected_cost
+        assert energy_bank.operation_cost(-balance) == expected_cost
 
     def test_idle_input(self, energy_bank: EnergyBank):
         previous_energy_lvl = energy_bank.lvl

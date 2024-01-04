@@ -36,13 +36,13 @@ st.title("Energy Management System")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    eb_capacity = st.number_input("Energy bank capacity:", min_value=3.0, max_value=10.0, value=3.0)
+    eb_capacity = st.number_input("Energy bank capacity:", min_value=0.0, max_value=15.0, value=3.6 * 2)
 with col2:
-    eb_cost = st.number_input("Energy bank cost [zl]:", min_value=0.0, step=1.0, value=500.0)
+    eb_cost = st.number_input("Energy bank cost [zl]:", min_value=0.0, step=1.0, value=(6499.0 * 2) / 2)
 with col3:
-    eb_cycles = st.number_input("Energy bank cycles:", min_value=0, value=500)
+    eb_cycles = st.number_input("Energy bank cycles:", min_value=0, value=8000)
 with col4:
-    eb_min_lvl = st.number_input("Energy bank min value:", min_value=0.0, max_value=eb_capacity / 2, value=1.0)
+    eb_min_lvl = st.number_input("Energy bank min value:", min_value=0.0, max_value=eb_capacity / 2, value=0.23 * 2)
 with col5:
     eb_start_lvl = st.number_input("Energy bank start lvl:", min_value=eb_min_lvl, max_value=eb_capacity, value=eb_min_lvl)
 
@@ -53,10 +53,10 @@ with col2:
     load_multiplier = st.number_input("Load multiplier:", min_value=0.5, max_value=2.0, step=0.1, value=1.0)
 
 with st.form("my_form"):
-    date_start = datetime.strptime("04.09.2020 05:00:00", "%d.%m.%Y %H:%M:%S")
-    date_end = datetime.strptime("04.09.2020 12:00:00", "%d.%m.%Y %H:%M:%S")
-    date_earliest = datetime.strptime("01.09.2020 05:00:00", "%d.%m.%Y %H:%M:%S")
-    date_oldest = datetime.strptime("10.09.2020 12:00:00", "%d.%m.%Y %H:%M:%S")
+    date_start = datetime.strptime("01.01.2020 00:00:00", "%d.%m.%Y %H:%M:%S")
+    date_end = datetime.strptime("01.03.2020 23:00:00", "%d.%m.%Y %H:%M:%S")
+    date_earliest = datetime.strptime("01.01.2020 00:00:00", "%d.%m.%Y %H:%M:%S")
+    date_oldest = datetime.strptime("30.12.2020 23:00:00", "%d.%m.%Y %H:%M:%S")
     date_start, date_end = st.slider("Date range", min_value=date_earliest, max_value=date_oldest, value=[date_start, date_end])
     with st.expander("Info about smart systems"):
         st.markdown("""##### *SmartSystem* \n\n _The operation of this system is divided into two phases: day and night.
