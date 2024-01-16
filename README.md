@@ -22,30 +22,30 @@ The general scheme is presented in the diagram below.
 #### Point `1`
 
 The system retrieves the data required to start the operation:\
-`start_date` - date and time when the system started working\
-`current_date` = `start_date` - current date and time of system shutdown\
-`end_date` - date and time of system shutdown\
-`eb_properties` - properties describing photovoltaics energy bank\
-`pv_properies` - properties describing photovoltaics installation\
-`load_properties` - properties describing energy consumption\
+`start_date` - date and time when the system started working.\
+`current_date` = `start_date` - current date and time of system shutdown.\
+`end_date` - date and time of system shutdown.\
+`eb_properties` - properties describing photovoltaics energy bank.\
+`pv_properies` - properties describing photovoltaics installation.\
+`load_properties` - properties describing energy consumption.
 
 #### Point `2`
 
 An energy plan is a strategy outlining how energy will be managed in the near future. There are two periods: the
-daytime, from sunrise to sunset, and the nighttime, covering the remaining hours. Depending on the period, the plan is
+[daytime](lib/day_algorithm.md), from sunrise to sunset, and the [nighttime](lib/night_algorithm.md), covering the remaining hours. Depending on the period, the plan is
 created based on a different algorithm.
 Algorithm input data:\
-`max_b` - maximum energy value in the energy bank\
-`min_b` - minimum energy value in the energy bank\
-`start_b` - current energy bank lvl\
-`prices` - purchase/sale prices of energy within a specific period\
-`hourly_balances` - energy balances within a given period\
+`max_b` - maximum energy value in the energy bank.\
+`min_b` - minimum energy value in the energy bank.\
+`start_b` - current energy bank lvl.\
+`prices` - purchase/sale prices of energy within a specific period.\
+`hourly_balances` - energy balances within a given period.\
 Output data :\
 `updated_hourly_balances` - energy plan covering the period from the current time until the end of the current period.
 
 #### Point `3`
 
-Current energy balance is subtraction of `pv production` - `load consumption`
+Current energy balance is subtraction of `pv production` - `load consumption`.
 
 #### Point `4`
 

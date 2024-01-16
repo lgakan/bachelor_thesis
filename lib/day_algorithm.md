@@ -70,7 +70,7 @@ the `hourly_balances` array in order to reach `max_b` at the end.
 
 #### Point `7`
 
-`i_balance` update is based on `need` other balances.
+`i_balance` update is based on `need` and balances.
 
 ### Point `8`
 
