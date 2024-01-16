@@ -16,7 +16,7 @@ trading platforms._
 
 The general scheme is presented in the diagram below.
 <p align="center">  
-    <img src="lib/images/main_2.png" alt="The chart`s image of the system flow" width="700" height="900">
+    <img src="lib/images/general_scheme.png" alt="The chart`s image of the system flow" width="700" height="900">
 </p>
 
 #### Point `1`
@@ -49,18 +49,14 @@ Current energy balance is subtraction of `pv production` - `load consumption`
 
 #### Point `4`
 
-The `extra` value is the amount by which the energy bank should be unloaded so that its charge level decreases to a
-maximum of 0.
-The determination is based on the balances array from start to `i_balance`.
+System data at a given hour:\
+`price` - purchase/sale prices of energy.\
+`energy_bank_level` - level of energy storage charge.\
+`pv_production` - production of photovoltaic installations. \
+`load_consumption` - building consumption.\
+`energy_plan_balance` - projected energy balance.
 
-#### Point `5`
 
-The `need` represents the maximum total value that needs to be achieved by manipulating the values in
-the `hourly_balances` array in order to reach `max_b` at the end.
-
-#### Point `6`
-
-`i_balance` update is based on `need` other balances.
 
 ## Setup
 
