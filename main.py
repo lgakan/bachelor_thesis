@@ -16,7 +16,7 @@ def main():
     smart_save_system = SmartSaveSystem()
 
     for current_date in pd.date_range(start=date_start, end=date_stop, freq=timedelta(hours=1)):
-        logger.info(f"CURRENT DATE: {current_date}")
+        logger.warning(f"CURRENT DATE: {current_date}")
         bare_system.feed_consumption(current_date)
         pv_system.feed_consumption(current_date)
         raw_full_system.feed_consumption(current_date)

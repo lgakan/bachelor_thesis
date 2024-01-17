@@ -1,6 +1,6 @@
-import logging
 from datetime import datetime
 
+import logging
 from colorlog import ColoredFormatter
 
 current_time = datetime.now().strftime("%H_%M_%S %d-%m-%Y")
@@ -15,7 +15,7 @@ stream_handler.setLevel(LOG_LEVEL)
 stream_handler.setFormatter(formatter_stream)
 
 file_handler = logging.FileHandler(filename=f"logs/{current_time}.log", mode='w', encoding="utf-8")
-stream_handler.setLevel(LOG_LEVEL)
+file_handler.setLevel(LOG_LEVEL)
 file_handler.setFormatter(formatter_file)
 
 logging.basicConfig(level=LOG_LEVEL, handlers=[file_handler, stream_handler])

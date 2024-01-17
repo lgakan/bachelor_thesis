@@ -29,6 +29,13 @@ class SystemBase:
     def plot_charts(self):
         return self.plotter.plot_charts(f"System Data - {self.__class__.__name__}")
 
+    def log_data(self, cost: float, balance: Union[None, float] = None, bank_lvl: Union[None, float] = None) -> None:
+        logger.info(f"{self.__class__.__name__} current cost: {cost:.3}")
+        if balance is not None:
+            logger.info(f"{self.__class__.__name__} current balance: {balance:.3}")
+        if bank_lvl is not None:
+            logger.info(f"{self.__class__.__name__} current energy_bank_lvl: {bank_lvl:.3}")
+
 
 class BareSystem(SystemBase):
     def __init__(self, load_multiplier: Union[None, int] = None, **kwargs):
@@ -44,6 +51,7 @@ class BareSystem(SystemBase):
         consumption = round(fake_consumption * random.uniform(0.8, 1.2), 2)
         rce_price = self.energy_pricer.get_rce_by_date(date_in)
         cost = self.calculate_cost(consumption, rce_price)
+        self.log_data(cost)
         self.summed_cost += round(cost, 2)
         self.plotter.add_data_row([date_in, rce_price, consumption, 0, 0, self.summed_cost])
 
@@ -65,7 +73,7 @@ class PvSystem(SystemBase):
         random.seed(0)
         reduced_consumption = round(fake_reduced_consumption * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, reduced_consumption)
-        logger.info(f"PvSystem current cost: {cost}")
+        self.log_data(cost)
         self.summed_cost += round(cost, 2)
         self.plotter.add_data_row([date_in, rce_price, consumption, production, 0, self.summed_cost])
 
@@ -101,9 +109,7 @@ class RawFullSystem(SystemBase):
         random.seed(0)
         current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, current_balance)
-        logger.info(f"RawSystem current balance: {current_balance}")
-        logger.info(f"RawSystem current cost: {cost}")
-        logger.info(f"RawSystem current bank lvl: {self.energy_bank.lvl}")
+        self.log_data(cost, current_balance, self.energy_bank.lvl)
         self.summed_cost += round(cost, 2)
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
 
@@ -259,9 +265,7 @@ class SmartSystem(SystemBase):
         current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         predicted_balance = self.energy_plan[date_in]
         cost = self.calculate_cost(rce_price, predicted_balance, current_balance)
-        logger.info(f"SmartSystem current balance: {current_balance}")
-        logger.info(f"SmartSystem current cost: {cost}")
-        logger.info(f"SmartSystem current bank lvl: {self.energy_bank.lvl}")
+        self.log_data(cost, current_balance, self.energy_bank.lvl)
         self.summed_cost += round(cost, 2)
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
 
@@ -328,8 +332,6 @@ class SmartSaveSystem(SystemBase):
         random.seed(0)
         current_balance = round(fake_current_balance * random.uniform(0.8, 1.2), 2)
         cost = self.calculate_cost(rce_price, current_balance)
-        logger.info(f"SaveSystem current balance: {current_balance}")
-        logger.info(f"SaveSystem current cost: {cost}")
-        logger.info(f"SaveSystem current bank lvl: {self.energy_bank.lvl}")
+        self.log_data(cost, current_balance, self.energy_bank.lvl)
         self.summed_cost += round(cost, 2)
         self.plotter.add_data_row([date_in, rce_price, consumption, production, self.energy_bank.lvl, self.summed_cost])
