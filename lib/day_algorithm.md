@@ -57,6 +57,29 @@
 5. `i` = `i`- `current_need`.
 6. `need` = `need` - `current_need`.
 
+## Algorithm workflow
+
+<p align="center">  
+    <img src="images/day_algo.png" alt="The chart`s image of the system flow" width="700" height="900">
+</p>
+
+#### Point `6`
+
+The `need` represents the maximum total value that needs to be achieved by manipulating the values in
+the `hourly_balances` array in order to reach `max_b` at the end.
+
+#### Point `7`
+
+`i_balance` update is based on `need` and balances.
+
+### Point `8`
+
+Data required for algorithm initialization:\
+`input_period` - period during which the algorithm operates.\
+`prices`- prices of energy from the input period.\
+`bank_properties`- all values describing the storage, such as its capacity, current charge level, and the like.\
+`predicted_balances` - input list of balances.
+
 ## Example
 
 ### Input:

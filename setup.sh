@@ -10,7 +10,7 @@ if [ -f "$UNIX_ACTIVATE" ]; then
   . venv/bin/activate
 elif [ -f "$WIN_ACTIVATE" ]; then
   echo "Running build system on Windows."
-  venv/Scripts/activate
+  source venv/Scripts/activate
 else
   echo "VENV run failed."
   return 1

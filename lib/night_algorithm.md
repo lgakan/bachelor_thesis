@@ -45,6 +45,27 @@
     2. If not, we decrease `extra` by the value of this balance, set the balance itself to 0, update `inner_balances`,
        and continue.
 
+## Algorithm workflow
+
+<p align="center">  
+    <img src="images/night_algo.png" alt="The chart`s image of the system flow" width="700" height="900">
+</p>
+
+#### Point `5`
+
+The `extra` value is the amount by which the energy bank should be unloaded so that its charge level decreases to a
+maximum of 0.
+
+The determination is based on the balances array from start to `i_balance`.
+
+#### Point `8`
+
+Data required for algorithm initialization:\
+`input_period` - period during which the algorithm operates.\
+`prices`- prices of energy from the input period.\
+`bank_properties`- all values describing the storage, such as its capacity, current charge level, and the like.\
+`predicted_balances` - input list of balances.
+
 ## Example
 
 ### Input

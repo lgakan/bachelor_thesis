@@ -16,51 +16,47 @@ trading platforms._
 
 The general scheme is presented in the diagram below.
 <p align="center">  
-    <img src="lib/images/main_2.png" alt="The chart`s image of the system flow" width="700" height="900">
+    <img src="lib/images/general_scheme.png" alt="The chart`s image of the system flow" width="700" height="900">
 </p>
 
 #### Point `1`
 
 The system retrieves the data required to start the operation:\
-`start_date` - date and time when the system started working\
-`current_date` = `start_date` - current date and time of system shutdown\
-`end_date` - date and time of system shutdown\
-`eb_properties` - properties describing photovoltaics energy bank\
-`pv_properies` - properties describing photovoltaics installation\
-`load_properties` - properties describing energy consumption\
+`start_date` - date and time when the system started working.\
+`current_date` = `start_date` - current date and time of system shutdown.\
+`end_date` - date and time of system shutdown.\
+`eb_properties` - properties describing photovoltaics energy bank.\
+`pv_properies` - properties describing photovoltaics installation.\
+`load_properties` - properties describing energy consumption.
 
 #### Point `2`
 
 An energy plan is a strategy outlining how energy will be managed in the near future. There are two periods: the
-daytime, from sunrise to sunset, and the nighttime, covering the remaining hours. Depending on the period, the plan is
+[daytime](lib/day_algorithm.md), from sunrise to sunset, and the [nighttime](lib/night_algorithm.md), covering the remaining hours. Depending on the period, the plan is
 created based on a different algorithm.
 Algorithm input data:\
-`max_b` - maximum energy value in the energy bank\
-`min_b` - minimum energy value in the energy bank\
-`start_b` - current energy bank lvl\
-`prices` - purchase/sale prices of energy within a specific period\
-`hourly_balances` - energy balances within a given period\
+`max_b` - maximum energy value in the energy bank.\
+`min_b` - minimum energy value in the energy bank.\
+`start_b` - current energy bank lvl.\
+`prices` - purchase/sale prices of energy within a specific period.\
+`hourly_balances` - energy balances within a given period.\
 Output data :\
 `updated_hourly_balances` - energy plan covering the period from the current time until the end of the current period.
 
 #### Point `3`
 
-Current energy balance is subtraction of `pv production` - `load consumption`
+Current energy balance is subtraction of `pv production` - `load consumption`.
 
 #### Point `4`
 
-The `extra` value is the amount by which the energy bank should be unloaded so that its charge level decreases to a
-maximum of 0.
-The determination is based on the balances array from start to `i_balance`.
+System data at a given hour:\
+`price` - purchase/sale prices of energy.\
+`energy_bank_level` - level of energy storage charge.\
+`pv_production` - production of photovoltaic installations. \
+`load_consumption` - building consumption.\
+`energy_plan_balance` - projected energy balance.
 
-#### Point `5`
 
-The `need` represents the maximum total value that needs to be achieved by manipulating the values in
-the `hourly_balances` array in order to reach `max_b` at the end.
-
-#### Point `6`
-
-`i_balance` update is based on `need` other balances.
 
 ## Setup
 
