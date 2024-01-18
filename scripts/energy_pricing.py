@@ -12,7 +12,7 @@ from scripts.file_management import DfManager
 
 class EnergyWebScraper:
     """
-    Class fetching Polish market prices of electricity. Hereafter referred to as RCE
+    Class fetching Polish market prices of electricity from www.pse.pl. Hereafter referred to as RCE
     """
 
     def __init__(self, prices_path: str = Config.DATA_PRICES, date_column: Union[str, None] = None):

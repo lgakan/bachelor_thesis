@@ -13,7 +13,8 @@ class SunManager:
         sun = Sun(lat=self.latitude, lon=self.longitude)
         sunrise = sun.get_local_sunrise_time(date_in.date())
         sunset = sun.get_local_sunset_time(date_in.date())
-        return int(sunrise.strftime('%H')), int(sunset.strftime('%H'))
+        sunrise_hour, sunset_hour = int(sunrise.strftime('%H')), int(sunset.strftime('%H'))
+        return sunrise_hour, sunset_hour
 
 
 if __name__ == "__main__":

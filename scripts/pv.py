@@ -53,7 +53,7 @@ class Pv:
                 return -180
 
     def update_pv_file(self):
-        s = requests.Session()
+        session = requests.Session()
         url = Config.PV_API_LINK + "data/pv"
         args = {
             'lat': Config.LATITUDE,
@@ -68,7 +68,7 @@ class Pv:
             'azim': self.calculate_azimuth(),
             'format': 'csv'
         }
-        response = s.get(url, params=args)
+        response = session.get(url, params=args)
         df = pd.read_csv(StringIO(response.text), skiprows=3)
         df["time"] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M')
         df["time"] = df["time"].apply(lambda x: x.replace(year=2020))
