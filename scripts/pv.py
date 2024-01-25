@@ -20,7 +20,7 @@ class Pv:
     """
 
     def __init__(self,
-                 date_column: Union[None, str] = None,
+                 date_column: str = "Date",
                  size: int = 5,
                  direction: PhotovoltaicDirection = PhotovoltaicDirection.SOUTH):
         self.date_column = date_column

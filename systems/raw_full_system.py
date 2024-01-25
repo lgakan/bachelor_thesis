@@ -8,18 +8,10 @@ from systems.system_base import SystemBase
 
 
 class RawFullSystem(SystemBase):
-    def __init__(self, eb_capacity: float = 3.0,
-                 eb_min_lvl: float = 0.0,
-                 eb_start_lvl: float = 1.0,
-                 eb_purchase_cost: float = 10000.0,
-                 eb_cycles: int = 5000,
-                 pv_size: int = 5,
-                 load_multiplier: Union[None, int] = None,
-                 **kwargs):
+    def __init__(self, energy_bank: EnergyBank, pv_producer: Pv, load_multiplier: Union[None, int] = None, **kwargs):
         super().__init__(load_multiplier=load_multiplier)
-        self.producer = Pv(date_column="Date", size=pv_size)
-        self.energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl,
-                                      purchase_cost=eb_purchase_cost, cycles_num=eb_cycles)
+        self.producer = pv_producer
+        self.energy_bank = energy_bank
 
     def calculate_cost(self, price: float, balance: float) -> float:
         bank_lvl = self.energy_bank.lvl
