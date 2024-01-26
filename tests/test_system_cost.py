@@ -1,6 +1,14 @@
-import pytest
-from scripts.system import BareSystem, PvSystem, RawFullSystem, SmartSystem, SmartSaveSystem, SystemBase
 import random
+
+import pytest
+
+from systems.bare_system import BareSystem
+from systems.pv_system import PvSystem
+from systems.raw_full_system import RawFullSystem
+from systems.smart_save_system import SmartSaveSystem
+from systems.smart_system import SmartSystem
+from scripts.energy_bank import EnergyBank
+from scripts.pv import Pv
 
 
 class TestBareSystemCost:
@@ -32,16 +40,15 @@ class TestPvSystemCost:
 
 
 class TestRawFullSystemCost:
-    SYSTEM_INPUT = {"eb_capacity": 5.0,
-                    "eb_min_lvl": 0.0,
-                    "eb_start_lvl": 3.0,
-                    "eb_purchase_cost": 2.0,
-                    "eb_cycles": 1.0,
-                    "pv_size": 5.0,
-                    "load_multiplier": 1.0}
+    ENERGY_BANK_INPUT = {"capacity": 5.0,
+                         "min_lvl": 0.0,
+                         "lvl": 3.0,
+                         "purchase_cost": 2.0,
+                         "cycles_num": 1.0}
+    PV_INPUT = 5
 
-    def test_positive_prices(self):
-        raw_full_system = RawFullSystem(**self.SYSTEM_INPUT)
+    def test_positive_prices(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        raw_full_system = RawFullSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         bank_capacity = raw_full_system.energy_bank.capacity
         price = random.uniform(0.1, 500.0)
         positive_in_range_balance, positive_out_range_balance = random.uniform(0.1, 2.0), random.uniform(5.1, 8.0)
@@ -69,8 +76,8 @@ class TestRawFullSystemCost:
         assert raw_full_system.calculate_cost(price, negative_out_range_balance) == -expense + bank_op_cost
         assert raw_full_system.energy_bank.lvl == raw_full_system.energy_bank.min_lvl
 
-    def test_negative_prices(self):
-        raw_full_system = RawFullSystem(**self.SYSTEM_INPUT)
+    def test_negative_prices(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        raw_full_system = RawFullSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         bank_capacity = raw_full_system.energy_bank.capacity
         price = random.uniform(-500.0, -0.1)
         positive_in_range_balance, positive_out_range_balance = random.uniform(0.1, 2.0), random.uniform(5.1, 8.0)
@@ -101,16 +108,15 @@ class TestRawFullSystemCost:
 
 class TestSmartSystemCost:
     bank_start_lvl = 3.0
-    SYSTEM_INPUT = {"eb_capacity": 6.0,
-                    "eb_min_lvl": 0.0,
-                    "eb_start_lvl": bank_start_lvl,
-                    "eb_purchase_cost": 2.0,
-                    "eb_cycles": 1.0,
-                    "pv_size": 5.0,
-                    "load_multiplier": 1.0}
+    ENERGY_BANK_INPUT = {"capacity": 6.0,
+                         "min_lvl": 0.0,
+                         "lvl": bank_start_lvl,
+                         "purchase_cost": 2.0,
+                         "cycles_num": 1.0}
+    PV_INPUT = 5
 
-    def test_positive_prices_positive_balance(self):
-        smart_system = SmartSystem(**self.SYSTEM_INPUT)
+    def test_positive_prices_positive_balance(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        smart_system = SmartSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         price = random.uniform(0.1, 500.0)
         smart_system.average_energy_cost = 0.0
         rel_bal_in_range, rel_bal_out_range = random.uniform(1.1, 2.0), random.uniform(7.1, 8.0)
@@ -153,8 +159,8 @@ class TestSmartSystemCost:
         assert smart_system.calculate_cost(price, pred_bal_out_range_h, rel_bal_out_range) == -profit + bank_op_cost
         assert smart_system.energy_bank.lvl == smart_system.energy_bank.capacity
 
-    def test_positive_prices_negative_balance(self):
-        smart_system = SmartSystem(**self.SYSTEM_INPUT)
+    def test_positive_prices_negative_balance(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        smart_system = SmartSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         price = random.uniform(0.1, 500.0)
         smart_system.average_energy_cost = 0.0
         rel_bal_in_range, rel_bal_out_range = random.uniform(-2.0, -1.1), random.uniform(-8.0, -7.1)
@@ -206,16 +212,15 @@ class TestSmartSystemCost:
 
 class TestSmartSaveSystemCost:
     bank_start_lvl = 3.0
-    SYSTEM_INPUT = {"eb_capacity": 5.0,
-                    "eb_min_lvl": 0.0,
-                    "eb_start_lvl": bank_start_lvl,
-                    "eb_purchase_cost": 2.0,
-                    "eb_cycles": 1.0,
-                    "pv_size": 5.0,
-                    "load_multiplier": 1.0}
+    ENERGY_BANK_INPUT = {"capacity": 5.0,
+                         "min_lvl": 0.0,
+                         "lvl": bank_start_lvl,
+                         "purchase_cost": 2.0,
+                         "cycles_num": 1.0}
+    PV_INPUT = 5
 
-    def test_positive_prices_positive_balance(self):
-        save_system = SmartSaveSystem(**self.SYSTEM_INPUT)
+    def test_positive_prices_positive_balance(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        save_system = SmartSaveSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         save_system.average_energy_cost = 300.0
         low_price, high_price = random.uniform(0.1, 299.0), random.uniform(300.1, 599.0)
         positive_in_range_balance, positive_out_range_balance = random.uniform(0.1, 2.0), random.uniform(5.1, 8.0)
@@ -245,8 +250,8 @@ class TestSmartSaveSystemCost:
         assert save_system.calculate_cost(high_price, positive_out_range_balance) == -profit
         assert save_system.energy_bank.lvl == self.bank_start_lvl
 
-    def test_positive_prices_negative_balance(self):
-        save_system = SmartSaveSystem(**self.SYSTEM_INPUT)
+    def test_positive_prices_negative_balance(self, energy_bank: type(EnergyBank), pv_producer: Pv):
+        save_system = SmartSaveSystem(energy_bank(**self.ENERGY_BANK_INPUT), pv_producer)
         save_system.average_energy_cost = 300.0
         low_price, high_price = random.uniform(0.1, 299.0), random.uniform(300.1, 599.0)
         negative_in_range_balance, negative_out_range_balance = random.uniform(-2.0, -0.1), random.uniform(-8.0, -5.1)
