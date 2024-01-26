@@ -46,5 +46,5 @@ class Load:
 
 
 if __name__ == "__main__":
-    load = Load(date_column="Date")
-    print(load.get_consumption_by_date(pd.to_datetime("01.01.2015 06:00:00")))
+    load_in = Load(date_column="Date")
+    print(load_in.get_consumption_by_date(pd.to_datetime("01.01.2015 06:00:00")))

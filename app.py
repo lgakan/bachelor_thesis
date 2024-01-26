@@ -9,7 +9,13 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from lib.logger import logger
-from scripts.system import BareSystem, PvSystem, RawFullSystem, SmartSystem, SmartSaveSystem
+from scripts.energy_bank import EnergyBank
+from scripts.pv import Pv
+from systems.bare_system import BareSystem
+from systems.pv_system import PvSystem
+from systems.raw_full_system import RawFullSystem
+from systems.smart_save_system import SmartSaveSystem
+from systems.smart_system import SmartSystem
 
 
 @st.cache_data
@@ -74,18 +80,16 @@ with st.form("my_form"):
 
     submitted = st.form_submit_button("Run!")
     if submitted:
+        energy_bank = EnergyBank(capacity=eb_capacity, min_lvl=eb_min_lvl, lvl=eb_start_lvl, purchase_cost=eb_cost, cycles_num=eb_cycles)
+        pv_producer = Pv(size=pv_size)
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Bare", "pv", "full_raw", "smart", "save_smart", "summary"])
+
         bare_system = BareSystem(load_multiplier=load_multiplier)
         pv_system = PvSystem(pv_size=pv_size, load_multiplier=load_multiplier)
-        raw_full_system = RawFullSystem(eb_capacity=eb_capacity, eb_min_lvl=eb_min_lvl, eb_start_lvl=eb_start_lvl,
-                                        eb_purchase_cost=eb_cost, eb_cycles=eb_cycles, pv_size=pv_size,
-                                        load_multiplier=load_multiplier)
-        smart_system = SmartSystem(eb_capacity=eb_capacity, eb_min_lvl=eb_min_lvl, eb_start_lvl=eb_start_lvl,
-                                   eb_purchase_cost=eb_cost, eb_cycles=eb_cycles, pv_size=pv_size,
-                                   load_multiplier=load_multiplier)
-        smart_save_system = SmartSaveSystem(eb_capacity=eb_capacity, eb_min_lvl=eb_min_lvl, eb_start_lvl=eb_start_lvl,
-                                            eb_purchase_cost=eb_cost, eb_cycles=eb_cycles, pv_size=pv_size,
-                                            load_multiplier=load_multiplier)
+        raw_full_system = RawFullSystem(copy.deepcopy(energy_bank), copy.deepcopy(pv_producer))
+        smart_system = SmartSystem(copy.deepcopy(energy_bank), copy.deepcopy(pv_producer))
+        smart_save_system = SmartSaveSystem(copy.deepcopy(energy_bank), copy.deepcopy(pv_producer))
+
         for current_date in pd.date_range(start=date_start, end=date_end, freq=timedelta(hours=1)):
             logger.warning(f"CURRENT DATE: {current_date}")
             bare_system.feed_consumption(current_date)

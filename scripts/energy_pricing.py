@@ -12,7 +12,7 @@ from scripts.file_management import DfManager
 
 class EnergyWebScraper:
     """
-    Class fetching Polish market prices of electricity. Hereafter referred to as RCE
+    Class fetching Polish market prices of electricity from www.pse.pl. Hereafter referred to as RCE
     """
 
     def __init__(self, prices_path: str = Config.DATA_PRICES, date_column: Union[str, None] = None):
@@ -75,7 +75,7 @@ class EnergyWebScraper:
 
 
 if __name__ == "__main__":
-    scaper = EnergyWebScraper("test_file.csv", date_column="Date")
-    scaper.get_prices_file_by_date(date_start=pd.Timestamp("21.09.2023 02:00:00"))
-    scaper.check_next_day_availability(pd.Timestamp("21.09.2011 02:00:00"))
-    print(scaper.get_rce_by_date(pd.Timestamp("21.09.2023 02:00:00")))
+    scraper = EnergyWebScraper("test_file.csv", date_column="Date")
+    scraper.get_prices_file_by_date(date_start=pd.Timestamp("21.09.2023 02:00:00"))
+    scraper.check_next_day_availability(pd.Timestamp("21.09.2011 02:00:00"))
+    print(scraper.get_rce_by_date(pd.Timestamp("21.09.2023 02:00:00")))
