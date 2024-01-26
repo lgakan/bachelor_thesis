@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List, Union
+from typing import Union
 
 import pandas as pd
 
@@ -28,14 +28,6 @@ class SmartSystem(SystemBase):
     @prediction_strategy.setter
     def prediction_strategy(self, strategy: Union[PredictionStrategy, None]) -> None:
         self._prediction_strategy = strategy
-
-    @staticmethod
-    def is_ascending(arr: List[Union[int, float]]) -> bool:
-        n = len(arr)
-        for i in range(1, n):
-            if arr[i - 1] > arr[i]:
-                return False
-        return True
 
     def calculate_average_energy_cost(self, start: pd.Timestamp, end: pd.Timestamp) -> None:
         prices = self.energy_pricer.get_rce_by_date(start, end)
